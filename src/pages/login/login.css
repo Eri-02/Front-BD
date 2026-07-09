@@ -1,0 +1,349 @@
+/* =========================================
+   LOGIN PAGE WRAPPER
+========================================= */
+
+.login-page{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+}
+
+.auth-shell{
+  width:100%;
+  max-width:1000px;
+  min-height:640px;
+  background:var(--white);
+  border-radius:28px;
+  display:grid;
+  grid-template-columns:1fr 1.05fr;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(58,69,102,0.12);
+}
+
+/* =========================================
+   PANEL IZQUIERDO
+========================================= */
+
+.brand-panel{
+  background:linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color:var(--white);
+  padding:44px 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.brand-panel::before{
+  content:"";
+  position:absolute;
+  width:420px; height:420px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.08);
+  top:-120px; right:-160px;
+}
+
+.brand-panel::after{
+  content:"";
+  position:absolute;
+  width:300px; height:300px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.06);
+  top:-60px; right:-100px;
+}
+
+.brand{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  letter-spacing:2px;
+  color:var(--secondary);
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:relative;
+  z-index:1;
+}
+
+.brand::before,
+.brand::after{
+  content:"•";
+  color:var(--secondary);
+}
+
+/* =========================================
+   PANEL DERECHO
+========================================= */
+
+.form-panel{
+  padding:48px 52px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:var(--white);
+}
+
+/* =========================================
+   TABS
+========================================= */
+
+.form-tabs{
+  display:flex;
+  gap:6px;
+  background:var(--track);
+  padding:5px;
+  border-radius:12px;
+  margin-bottom:32px;
+  width:fit-content;
+}
+
+.tab-btn{
+  border:none;
+  background:transparent;
+  padding:9px 20px;
+  border-radius:9px;
+  font-family:'Manrope', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+
+.tab-btn.active{
+  background:var(--white);
+  color:var(--text);
+  box-shadow:0 2px 6px rgba(58,69,102,0.08);
+}
+
+.tab-btn:hover{
+  color:var(--text);
+}
+
+/* =========================================
+   TITULOS
+========================================= */
+
+.form-title{
+  font-family:'Fraunces', serif;
+  font-size:24px;
+  font-weight:600;
+  margin:0 0 6px;
+  color:var(--text);
+}
+
+.form-desc{
+  font-size:13.5px;
+  color:var(--muted);
+  margin:0 0 28px;
+  line-height:1.6;
+}
+
+/* =========================================
+   FORMULARIO / CAMPOS
+========================================= */
+
+.field{
+  margin-bottom:18px;
+}
+
+.field label{
+  display:block;
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:7px;
+}
+
+.name-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+/* =========================================
+   INPUTS
+========================================= */
+
+.input-wrap{
+  position:relative;
+}
+
+.input-wrap input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:11px;
+  border:1.5px solid var(--border);
+  background:var(--input);
+  font-family:'Manrope', sans-serif;
+  font-size:13.5px;
+  color:var(--text);
+  outline:none;
+  transition:border-color .15s ease, background .15s ease;
+}
+
+.input-wrap input::placeholder{
+  color:var(--muted);
+}
+
+.input-wrap input:focus{
+  border-color:var(--secondary);
+  background:var(--white);
+}
+
+.input-wrap .icon{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* Mostrar/ocultar contraseña */
+
+.toggle-pass{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:none;
+  cursor:pointer;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  font-family:'Manrope', sans-serif;
+}
+
+.toggle-pass:hover{
+  color:var(--text);
+}
+
+/* =========================================
+   MEDIDOR DE FUERZA DE CONTRASEÑA
+========================================= */
+
+.strength-meter{
+  display:flex;
+  gap:4px;
+  margin-top:8px;
+}
+
+.strength-meter span{
+  height:4px;
+  flex:1;
+  border-radius:4px;
+  background:var(--track);
+  transition:background .15s ease;
+}
+
+/* =========================================
+   RECORDAR / FILA ENTRE ELEMENTOS
+========================================= */
+
+.row-between{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:22px 0;
+  font-size:13px;
+}
+
+.remember{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--text);
+  font-weight:600;
+  cursor:pointer;
+}
+
+.remember input{
+  width:15px;
+  height:15px;
+  accent-color:var(--secondary);
+  cursor:pointer;
+}
+
+/* =========================================
+   LINKS (renderizados como <button>)
+========================================= */
+
+.link-gold{
+  background:none;
+  border:none;
+  padding:0;
+  margin:0;
+  font:inherit;
+  color:var(--primary-dark);
+  text-decoration:none;
+  font-weight:700;
+  border-bottom:1.5px solid var(--secondary);
+  padding-bottom:1px;
+  cursor:pointer;
+}
+
+.link-gold:hover{
+  color:var(--secondary);
+}
+
+/* =========================================
+   BOTON PRINCIPAL
+========================================= */
+
+.btn-primary{
+  width:100%;
+  border:none;
+  border-radius:12px;
+  padding:14px;
+  background:var(--secondary);
+  color:var(--primary-dark);
+  font-family:'Manrope', sans-serif;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+  transition:filter .15s ease, transform .15s ease;
+  margin-top:6px;
+}
+
+.btn-primary:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
+}
+
+.btn-primary:active{
+  transform:scale(.99);
+}
+
+/* =========================================
+   TEXTO INFERIOR
+========================================= */
+
+.switch-line{
+  text-align:center;
+  margin-top:22px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 860px){
+  .auth-shell{
+    grid-template-columns:1fr;
+    min-height:auto;
+  }
+  .brand-panel{
+    display:none;
+  }
+  .form-panel{
+    padding:36px 26px;
+  }
+}
