@@ -347,3 +347,50 @@
     padding:36px 26px;
   }
 }
+/*Estilos para la ventana flotante de elegir el rol*/
+
+.contenedor-rol-flotante {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    border: 2px solid orangered;
+}
+
+.texto-rol-etiqueta {
+    font-size: 15px;
+    font-weight: 700;
+    color: darkslategray;
+}
+
+.grupo-botones-rol {
+    display: flex;
+    gap: 4px;
+}
+
+.boton-cambiar-rol {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 9px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: gray;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.boton-cambiar-rol:hover {
+    color: gray;
+}
+
+.boton-cambiar-rol.activo {
+    background: white;
+    color: darkslategray;
+    font-weight: 900;
+}
+
