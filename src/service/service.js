@@ -61,6 +61,14 @@ const authService = {
         });
         return response.data;
     },
+
+    autenticarPareja: async (username, password) => {
+        const response = await axios.post(`${API_BASE_URL}/Pareja/Autenticar`, {
+            username: username,
+            password: password
+        });
+        return response.data;
+    },
     // Endpoint para traer los clientes
     obtenerClientePorId: async (idCliente) => {
         const response = await axios.get(`${API_BASE_URL}/Cliente/ObtenerCliente`, {
