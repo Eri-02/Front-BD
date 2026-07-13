@@ -68,29 +68,51 @@ function Login() {
     };
 
     const handleLoginSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            let respuesta;
+    e.preventDefault();
+
+    try {
+        let respuesta;
+
+        if (rolUsuario === "supervisor") {
+            respuesta = await service.autenticarSupervisor(
+                loginData.user,
+                loginData.password
+            );
+        } else if (rolUsuario === "pareja") {
+            respuesta = await service.autenticarPareja(
+                loginData.user,
+                loginData.password
+            );
+        } else {
+            respuesta = await service.autenticarCliente(
+                loginData.user,
+                loginData.password
+            );
+        }
+
+        if (respuesta.status === 200) {
+
+            localStorage.setItem("userRole", respuesta.rol);
+            localStorage.setItem("userData", JSON.stringify(respuesta.datos));
+
+            alert(`¡Bienvenid@, ${respuesta.datos.primerNombre}!`);
 
             if (rolUsuario === "supervisor") {
-                respuesta = await service.autenticarSupervisor(loginData.user, loginData.password);
+                navigate("/dashboardSupervisor");
+            } else if (rolUsuario === "pareja") {
+                navigate("/dashboardPareja");
             } else {
-                respuesta = await service.autenticarCliente(loginData.user, loginData.password);
-            }
-            if (respuesta.status === 200) {
-
-                localStorage.setItem("userRole", respuesta.rol);
-                localStorage.setItem("userData", JSON.stringify(respuesta.datos));
-
-                alert(`¡Bienvenid@, ${respuesta.datos.primerNombre}!`);
                 navigate("/dashboard");
             }
-        } catch (error) {
-
-            const mensajeError = error.response?.data?.message || "Credenciales incrrectas";
-            alert(`Error al iniciar sesión: ${mensajeError}`);
         }
-    };
+
+    } catch (error) {
+        const mensajeError =
+            error.response?.data?.message || "Credenciales incorrectas";
+
+        alert(`Error al iniciar sesión: ${mensajeError}`);
+    }
+};
 
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
@@ -156,6 +178,13 @@ function Login() {
                                 onClick={() => setRolUsuario("supervisor")}
                             >
                                 Soy Supervisor
+                            </button>
+                            <button
+                                type="button"
+                                className={`boton-cambiar-rol ${rolUsuario === "pareja" ? "activo" : ""}`}
+                                onClick={() => setRolUsuario("pareja")}
+                            >
+                                Soy Pareja
                             </button>
                         </div>
                     </div>

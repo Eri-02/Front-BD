@@ -195,7 +195,6 @@ function Dashboard() {
                                 />
                             </svg>
                             <div className="credit-ring-label">
-                                <div className="coin-icon">🪙</div>
                                 <p className="cr-caption">Crédito Disponible</p>
                                 <p className="cr-amount">{formatearMoneda(cupoDisponible)}</p>
                             </div>
@@ -226,7 +225,7 @@ function Dashboard() {
                         {loadingPartners ? (
                             <p style={{ color: "#aaa", padding: "10px" }}>Cargando parejas...</p>
                         ) : partners.length === 0 ? (
-                            <p style={{ color: "#aaa", padding: "10px" }}>No hay aprejas asociadas</p>
+                            <p style={{ color: "#aaa", padding: "10px" }}>No hay parejas asociadas</p>
                         ) : (
                             partners.map((p) => (
                                 <div className="partner-card" key={p.id}>
