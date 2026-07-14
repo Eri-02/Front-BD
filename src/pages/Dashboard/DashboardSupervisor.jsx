@@ -144,6 +144,8 @@ function DashboardSupervisor() {
                         </Link>
                         <Link to="/productos">Productos</Link>
                         <Link to="/supervisor/cliente">Usuarios</Link>
+                        <Link to="/supervisor/compra">Ver Compras</Link>
+                        
                     </nav>
                 </div>
 
@@ -165,7 +167,6 @@ function DashboardSupervisor() {
 
                     <div className="hero-center">
                         <div className="solicitudes-count">
-                            <div className="bell-icon">🔔</div>
                             <p className="sol-caption">Solicitudes por atender</p>
                             <p className="sol-amount">{solicitudesPendientes.length}</p>
                         </div>
@@ -176,7 +177,6 @@ function DashboardSupervisor() {
 
                     <div className="hero-right">
                         <div className="wallet-row">
-                            <div className="wallet-icon">🏬</div>
                             <div>
                                 <p className="wallet-caption">Almacén</p>
                                 <p className="wallet-amount">

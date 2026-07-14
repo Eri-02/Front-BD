@@ -20,11 +20,6 @@ function EliminarProducto() {
     const producto = mockProductos.find((p) => String(p.idProducto) === String(id)) || null;
     const [eliminando, setEliminando] = useState(false);
 
-    // ---- VERSIÓN CON BACKEND REAL (descomentar cuando exista el endpoint) ----
-    // Cuando tengas algo como service.obtenerProductoPorId(id):
-    // 1) borra "producto" y "mockProductos" de arriba
-    // 2) agrega "import service from "../../service/service";" al inicio del archivo
-    // 3) descomenta este bloque
     //
     // import { useEffect } from "react";
     // const [producto, setProducto] = useState(null);
@@ -65,10 +60,7 @@ function EliminarProducto() {
             navigate("/productos");
         }, 300);
 
-        // ---- VERSIÓN CON BACKEND REAL (descomentar cuando exista el endpoint) ----
-        // Cuando tengas algo como service.eliminarProducto(id), reemplaza el bloque
-        // de arriba por esto (y agrega el import de service al inicio del archivo):
-        //
+       
         // service.eliminarProducto(id)
         //     .then(() => navigate("/productos"))
         //     .catch((err) => {
@@ -106,7 +98,7 @@ function EliminarProducto() {
 
                 <div className="producto-body">
                     <div className="warning-box">
-                        <h3>⚠ Vas a eliminar este producto</h3>
+                        <h3>Vas a eliminar este producto</h3>
                         <p>Confirma que quieres eliminar permanentemente el siguiente producto del sistema.</p>
                     </div>
 

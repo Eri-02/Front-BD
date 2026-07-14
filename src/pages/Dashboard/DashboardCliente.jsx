@@ -4,7 +4,7 @@ import service from "../../service/service";
 import "./DashboardCliente.css";
 
 const transactions = [
-    { id: 1, date: "2026-07-10", time: "14:30", store: "Almacén Central", amount: "$1.5k", type: "gasto", partner: "Luis" }
+    { id: 1, date: "2026-07-10", time: "14:30", amount: "$1.5k", type: "gasto", partner: "Luis" }
 ];
 
 const overlimits = [
@@ -57,7 +57,7 @@ function Dashboard() {
             navigate("/login");
             return;
         }
-//Aqui se trae toda lainfo del cupo
+        //Aqui se trae toda lainfo del cupo
         const cargarDatosFinancierosYParejas = async () => {
             try {
                 const idCliente = cliente.idCliente || cliente.id;
@@ -82,14 +82,29 @@ function Dashboard() {
                     const dataParejas = await service.obtenerParejasPorCliente(idCliente);
 
                     if (Array.isArray(dataParejas)) {
+                      
+                       
+                        // const parejasConConsumo = await Promise.all(
+                        //     dataParejas.map(async (p) => {
+                        //         const respConsumoPareja = await service.obtenerCupoConsumidoPorPareja(p.idPareja);
+                        //         const consumidoPareja = Number(respConsumoPareja?.cupoConsumido) || 0;
+                        //         return { ...p, consumidoPareja };
+                        //     })
+                        // );
+                        //
+                        // y usar `parejasConConsumo` en el .map() de abajo en vez de `dataParejas`,
+                        // tomando `consumidoPareja` de cada objeto en lugar del valor fijo en 0.
+                        // ---------------------------------------------------------------
                         const parejasMapeadas = dataParejas.map((p) => {
                             const asignado = Number(p.cupoAsignado) || 0;
-                            const consumidoPareja = 0;
+                            const consumidoPareja = 0; // valor temporal hasta tener el endpoint real
                             const progreso = asignado > 0 ? Math.min((consumidoPareja / asignado) * 100, 100) : 0;
 
                             return {
                                 id: p.idPareja,
                                 name: `${p.primerNombre} ${p.primerApellido}`,
+                                assignedRaw: asignado,
+                                usedRaw: consumidoPareja,
                                 assigned: `$${asignado.toLocaleString("es-CO")}`,
                                 used: `$${consumidoPareja.toLocaleString("es-CO")}`,
                                 progress: progreso,
@@ -151,9 +166,6 @@ function Dashboard() {
                             Panel
                         </Link>
                         <Link to="/parejas">Parejas</Link>
-                        <a>Compras</a>
-                        <a>Contabilidad</a>
-                        <a>Configuración</a>
                     </nav>
                 </div>
 
@@ -245,7 +257,12 @@ function Dashboard() {
                                             style={{ width: `${p.progress}%` }}
                                         />
                                     </div>
-                                    <button className="btn-config">Configurar Restricciones</button>
+                                    <button
+                                        className="btn-config"
+                                        onClick={() => navigate(`/parejas/${p.id}/restricciones`)}
+                                    >
+                                        Configurar Restricciones
+                                    </button>
                                 </div>
                             ))
                         )}
@@ -268,31 +285,45 @@ function Dashboard() {
                                 </div>
                             </div>
 
+                            {/*
+                                Gráfica de consumo de cupo por pareja.
+                                Se calcula con los datos reales de "partners" (assignedRaw / usedRaw).
+                                Mientras no exista el endpoint de consumo por pareja, usedRaw viene en 0
+                                (ver el TODO en el useEffect de arriba).
+                            */}
+                            <div className="col-title" style={{ fontSize: 13, marginBottom: 10 }}>
+                                Consumo por Pareja
+                            </div>
                             <div className="chart-wrap">
-                                <div className="y-labels">
-                                    <span>50k</span>
-                                    <span>20k</span>
-                                    <span>10k</span>
-                                </div>
-                                <svg viewBox="0 0 420 170" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor="#e8b84b" stopOpacity="0.55" />
-                                            <stop offset="100%" stopColor="#e8b84b" stopOpacity="0.02" />
-                                        </linearGradient>
-                                    </defs>
-                                    <path
-                                        d="M40,150 C90,150 100,140 130,120 C160,100 170,40 210,32 C250,25 260,60 300,90 C330,112 350,140 400,146 L400,170 L40,170 Z"
-                                        fill="url(#areaFill)"
-                                    />
-                                    <path
-                                        d="M40,150 C90,150 100,140 130,120 C160,100 170,40 210,32 C250,25 260,60 300,90 C330,112 350,140 400,146"
-                                        fill="none"
-                                        stroke="#e8b84b"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
+                                {loadingPartners ? (
+                                    <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
+                                        Cargando consumo...
+                                    </p>
+                                ) : partners.length === 0 ? (
+                                    <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
+                                        No hay datos de consumo por pareja
+                                    </p>
+                                ) : (
+                                    <div className="bar-chart">
+                                        {partners.map((p) => {
+                                            const pct = p.assignedRaw > 0
+                                                ? Math.min((p.usedRaw / p.assignedRaw) * 100, 100)
+                                                : 0;
+                                            return (
+                                                <div className="bar-col" key={p.id}>
+                                                    <div className="bar-track">
+                                                        <div
+                                                            className="bar-fill"
+                                                            style={{ height: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                    <p className="bar-pct">{Math.round(pct)}%</p>
+                                                    <p className="bar-name">{p.name}</p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
 
                             <select
@@ -300,7 +331,7 @@ function Dashboard() {
                                 value={filterPartner}
                                 onChange={(e) => setFilterPartner(e.target.value)}
                             >
-                                <option value="">Filtrar por Pareja/Almacén</option>
+                                <option value="">Filtrar por Pareja</option>
                                 {partners.map((p) => (
                                     <option key={p.id} value={p.name}>
                                         {p.name}
@@ -312,7 +343,6 @@ function Dashboard() {
                                 <thead>
                                 <tr>
                                     <th>Fecha/Hora</th>
-                                    <th>Almacén (Sucursal)</th>
                                     <th>Monto</th>
                                     <th>Pareja</th>
                                 </tr>
@@ -327,7 +357,6 @@ function Dashboard() {
                                                 <br />
                                                 {tx.time}
                                             </td>
-                                            <td>{tx.store}</td>
                                             <td className={tx.type}>{tx.amount}</td>
                                             <td>{tx.partner}</td>
                                         </tr>

@@ -69,34 +69,38 @@ function Login() {
 
     const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!loginData.user || !loginData.password) {
+        alert("Por favor ingresa usuario y contraseña");
+        return;
+    }
 
     try {
         let respuesta;
-
+        
+        
         if (rolUsuario === "supervisor") {
-            respuesta = await service.autenticarSupervisor(
-                loginData.user,
-                loginData.password
-            );
+            respuesta = await service.autenticarSupervisor(loginData.user, loginData.password);
         } else if (rolUsuario === "pareja") {
-            respuesta = await service.autenticarPareja(
-                loginData.user,
-                loginData.password
-            );
+            respuesta = await service.autenticarPareja(loginData.user, loginData.password);
         } else {
-            respuesta = await service.autenticarCliente(
-                loginData.user,
-                loginData.password
-            );
+            // Cliente (default)
+            respuesta = await service.autenticarCliente(loginData.user, loginData.password);
         }
 
-        if (respuesta.status === 200) {
+        
+        if (respuesta && (respuesta.status === 200 || respuesta.datos)) {
+            // Guardar en localStorage
+            localStorage.setItem("userRole", respuesta.rol || rolUsuario);
+            localStorage.setItem("userData", JSON.stringify(respuesta.datos || respuesta));
+            
+            const nombre = respuesta.datos?.primerNombre || 
+                          respuesta.primerNombre || 
+                          "Usuario";
+            
+            alert(`¡Bienvenid@, ${nombre}!`);
 
-            localStorage.setItem("userRole", respuesta.rol);
-            localStorage.setItem("userData", JSON.stringify(respuesta.datos));
-
-            alert(`¡Bienvenid@, ${respuesta.datos.primerNombre}!`);
-
+            
             if (rolUsuario === "supervisor") {
                 navigate("/dashboardSupervisor");
             } else if (rolUsuario === "pareja") {
@@ -104,16 +108,17 @@ function Login() {
             } else {
                 navigate("/dashboard");
             }
+        } else {
+            alert("Error al iniciar sesión. Verifica tus credenciales.");
         }
-
     } catch (error) {
-        const mensajeError =
-            error.response?.data?.message || "Credenciales incorrectas";
-
+        console.error("Error en autenticación:", error);
+        const mensajeError = error.response?.data?.message || 
+                            error.message || 
+                            "Credenciales incorrectas o error de conexión";
         alert(`Error al iniciar sesión: ${mensajeError}`);
     }
 };
-
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
         try {

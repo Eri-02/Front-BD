@@ -3,18 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./cliente.css";
 
 /*
-    ============================================================
-    CONEXIÓN CON BACKEND (pendiente)
-    ============================================================
-    Este componente usa datos quemados (listaClientesMock) mientras
-    no exista el endpoint. Cuando el backend esté listo:
-
-    1) Eliminar "listaClientesMock" y "buscarCliente".
-
-    2) Reemplazar la carga inicial. Como una llamada real es
-       asíncrona, ahí SÍ corresponde usar useEffect (a diferencia
-       del mock síncrono actual):
-
+    
         const [cliente, setCliente] = useState(null);
         const [cargando, setCargando] = useState(true);
 
@@ -26,9 +15,7 @@ import "./cliente.css";
                 .finally(() => setCargando(false));
         }, [id]);
 
-       Endpoint esperado: GET /Cliente/{id}
-
-    3) Reemplazar el "console.log" dentro de actualizarCliente por:
+       
 
         service.actualizarCliente(id, cliente)
             .then(() => {
@@ -40,8 +27,7 @@ import "./cliente.css";
                 alert("No se pudo actualizar el cliente.");
             });
 
-       Endpoint esperado: PUT o PATCH /Cliente/{id}
-    ============================================================
+       
 */
 const listaClientesMock = [
     { idCliente: 1, nombreUsuario: "dianaperez", primerNombre: "Diana", segundoNombre: "Maria", primerApellido: "Pérez", segundoApellido: "Gómez", correoElectronico: "diana.perez@correo.com", cupoTotal: 5000000 },
@@ -61,10 +47,7 @@ function EditarCliente() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    // Guardamos el id junto con el cliente para poder detectar,
-    // durante el render, cuando el :id de la URL cambia (por ejemplo
-    // si se navega de "editar/1" a "editar/2" sin desmontar el
-    // componente) y así recalcular sin usar useEffect.
+ 
     const [prevId, setPrevId] = useState(id);
     const [cliente, setCliente] = useState(() => buscarCliente(id));
 
@@ -84,7 +67,7 @@ function EditarCliente() {
     const actualizarCliente = (e) => {
         e.preventDefault();
 
-        // TODO backend: reemplazar por service.actualizarCliente(id, cliente)
+     
         console.log("Cliente actualizado:", cliente);
         alert("Los datos del cliente fueron actualizados.");
         navigate("/supervisor/cliente");

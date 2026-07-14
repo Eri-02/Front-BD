@@ -124,6 +124,13 @@ function MostrarPareja() {
                                         <td>
                                             <div style={{ display: "flex", gap: "10px" }}>
                                                 <button
+                                                    className="btn btn-config"
+                                                    onClick={() => navigate(`/parejas/${idActual}/restricciones`)}
+                                                >
+                                                    Restricciones
+                                                </button>
+
+                                                <button
                                                     className="btn btn-edit"
                                                     onClick={() => navigate(`/parejas/editar/${idActual}`)}
                                                 >

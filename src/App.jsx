@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/login/login";
 import Dashboard from "./pages/dashboard/DashboardCliente";
 import DashboardSupervisor from "./pages/dashboard/DashboardSupervisor";
+import DashboardPareja from "./pages/dashboard/DashboardPareja";
 
 import MostrarPareja from "./pages/pareja/MostrarPareja";
 import AgregarPareja from "./pages/pareja/AgregarPareja";
@@ -19,6 +20,16 @@ import EditarCliente from "./pages/cliente/EditarCliente";
 import EliminarCliente from "./pages/cliente/EliminarCliente";
 import VerParejasCliente from "./pages/cliente/VerParejasCliente";
 
+import MostrarRestriccion from "./pages/restriccion/MostrarRestriccion";
+import AgregarRestriccion from "./pages/restriccion/AgregarRestriccion";
+import EditarRestriccion from "./pages/restriccion/EditarRestriccion";
+import EliminarRestriccion from "./pages/restriccion/EliminarRestriccion";
+
+import MostrarCompra from "./pages/compra/MostrarCompra";
+
+import CompraPareja from "./pages/compra/CompraPareja";
+import ProductosCompra from "./pages/producto/ProductoCompra";
+
 function App() {
   return (
     <BrowserRouter>
@@ -34,15 +45,29 @@ function App() {
 
         {/* Supervisor */}
         <Route path="/dashboardSupervisor" element={<DashboardSupervisor />} />
+
         <Route path="/productos" element={<Productos />} />
         <Route path="/productos/agregar" element={<AgregarProducto />} />
         <Route path="/productos/editar/:id" element={<EditarProducto />} />
         <Route path="/productos/eliminar/:id" element={<EliminarProducto />} />
+
         <Route path="/supervisor/cliente" element={<MostrarClientes />} />
         <Route path="/supervisor/cliente/agregar" element={<AgregarCliente />} />
         <Route path="/supervisor/cliente/editar/:id" element={<EditarCliente />} />
         <Route path="/supervisor/cliente/eliminar/:id" element={<EliminarCliente />} /> 
         <Route path="/supervisor/cliente/:id/parejas" element={<VerParejasCliente />} />
+
+        <Route path="/parejas/:idPareja/restricciones" element={<MostrarRestriccion/>} />
+        <Route path="/parejas/:idPareja/restricciones/agregar" element={<AgregarRestriccion />} />
+        <Route path="/parejas/:idPareja/restricciones/editar/:idRestriccion" element={<EditarRestriccion />} />
+        <Route path="/parejas/:idPareja/restricciones/eliminar/:idRestriccion" element={<EliminarRestriccion />} />
+
+        <Route path="/supervisor/compra" element={<MostrarCompra />} />
+
+         {/* Pareja */}
+         <Route path="/dashboardPareja" element={<DashboardPareja />} />
+         <Route path="/mis-compras" element={<CompraPareja />} />
+         <Route path="/productos/pareja" element={<ProductosCompra />} />
       </Routes>
     </BrowserRouter>
   );

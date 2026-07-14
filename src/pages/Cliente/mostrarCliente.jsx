@@ -2,15 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./cliente.css";
 
-/*
-    NOTA: no existe todavía un endpoint que devuelva "todos los clientes de un
-    almacén/supervisor" (algo como GET /Supervisor/ObtenerClientesPorAlmacen).
-    Mientras tanto dejo esta lista quemada para que se vea cómo debe lucir la
-    pantalla completa. Apenas exista ese endpoint, se reemplaza el useState
-    de abajo por un fetch real (con service.obtenerClientePorId y
-    service.obtenerCupoConsumido para cada id, tal como se hacía antes) y se
-    borra este comentario junto con "listaClientesMock".
-*/
+
 const listaClientesMock = [
     {
         idCliente: 1,

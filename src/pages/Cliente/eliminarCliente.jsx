@@ -2,15 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./cliente.css";
 
 /*
-    ============================================================
-    CONEXIÓN CON BACKEND (pendiente)
-    ============================================================
-    1) Eliminar "listaClientesMock" y "buscarCliente".
-
-    2) Como aquí solo se necesita leer el cliente (no editarlo),
-       al usar el backend real conviene sí guardar el resultado
-       en state, porque la llamada es asíncrona:
-
+    
         const [cliente, setCliente] = useState(null);
         const [cargando, setCargando] = useState(true);
 
@@ -22,9 +14,7 @@ import "./cliente.css";
                 .finally(() => setCargando(false));
         }, [id]);
 
-       Endpoint esperado: GET /Cliente/{id}
-
-    3) Reemplazar el "alert" dentro de eliminarCliente por:
+       GET /Cliente/{id}
 
         service.eliminarCliente(id)
             .then(() => {
@@ -35,9 +25,6 @@ import "./cliente.css";
                 console.error(err);
                 alert("No se pudo eliminar el cliente.");
             });
-
-       Endpoint esperado: DELETE /Cliente/{id}
-    ============================================================
 */
 const listaClientesMock = [
     { idCliente: 1, nombreUsuario: "dianaperez", primerNombre: "Diana", segundoNombre: "Maria", primerApellido: "Pérez", segundoApellido: "Gómez", correoElectronico: "diana.perez@correo.com", cupoTotal: 5000000 },
@@ -48,7 +35,7 @@ const listaClientesMock = [
     { idCliente: 6, nombreUsuario: "valentinagz", primerNombre: "Valentina", segundoNombre: "", primerApellido: "Gutiérrez", segundoApellido: "Ríos", correoElectronico: "valentina.gutierrez@correo.com", cupoTotal: 6000000 },
 ];
 
-// TODO backend: borrar esta función junto con listaClientesMock
+// borrar esta función junto con listaClientesMock
 function buscarCliente(id) {
     return listaClientesMock.find((c) => c.idCliente === Number(id)) || null;
 }
@@ -67,7 +54,7 @@ function EliminarCliente() {
         );
 
         if (confirmar) {
-            // TODO backend: reemplazar por service.eliminarCliente(id)
+            // reemplazar por service.eliminarCliente(id)
             alert("Cliente eliminado correctamente.");
             navigate("/supervisor/cliente");
         }
@@ -97,7 +84,7 @@ function EliminarCliente() {
                 <div className="cliente-body">
 
                     <div className="warning-box">
-                        <h3>⚠️ Advertencia</h3>
+                        <h3> Advertencia</h3>
                         <p>
                             Esta acción eliminará al cliente del sistema, junto con sus
                             parejas asociadas. Una vez eliminado no podrá recuperarse.
