@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import "./compra.css";
 
 const comprasQuemadas = [
-    { 
-        id_compra: 1, 
-        fecha: "2026-07-10", 
-        hora: "14:30", 
-        monto: 420000, 
+    {
+        id_compra: 1,
+        fecha: "2026-07-10",
+        hora: "14:30",
+        monto: 420000,
         id_almacen: 1,
         productos: [
             { id_producto: 1, nombre: "Leche Entera", precio: 4500, cantidad: 3 },
@@ -15,22 +15,22 @@ const comprasQuemadas = [
             { id_producto: 3, nombre: "Huevos", precio: 8000, cantidad: 1 }
         ]
     },
-    { 
-        id_compra: 2, 
-        fecha: "2026-07-08", 
-        hora: "10:15", 
-        monto: 180000, 
+    {
+        id_compra: 2,
+        fecha: "2026-07-08",
+        hora: "10:15",
+        monto: 180000,
         id_almacen: 2,
         productos: [
             { id_producto: 4, nombre: "Arroz", precio: 3500, cantidad: 5 },
             { id_producto: 5, nombre: "Frijoles", precio: 4200, cantidad: 3 }
         ]
     },
-    { 
-        id_compra: 3, 
-        fecha: "2026-07-05", 
-        hora: "19:02", 
-        monto: 650000, 
+    {
+        id_compra: 3,
+        fecha: "2026-07-05",
+        hora: "19:02",
+        monto: 650000,
         id_almacen: 1,
         productos: [
             { id_producto: 6, nombre: "Carne Molida", precio: 12000, cantidad: 2 },
@@ -94,8 +94,8 @@ function CompraPareja() {
                         <h1>Mis Compras</h1>
                         <p>Historial de todas tus compras realizadas</p>
                     </div>
-                    <button 
-                        className="btn btn-secondary" 
+                    <button
+                        className="btn btn-secondary"
                         onClick={() => navigate("/dashboardPareja")}
                     >
                         ← Volver al Dashboard
@@ -163,8 +163,8 @@ function CompraPareja() {
                             <div className="detalle-compra">
                                 <div className="detalle-header">
                                     <h3>Compra #{compraSeleccionada.id_compra}</h3>
-                                    <button 
-                                        className="btn btn-secondary" 
+                                    <button
+                                        className="btn btn-secondary"
                                         onClick={() => setCompraSeleccionada(null)}
                                         style={{ padding: "6px 12px", fontSize: "11px" }}
                                     >

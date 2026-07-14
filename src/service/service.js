@@ -61,7 +61,7 @@ const authService = {
         });
         return response.data;
     },
-
+    //Endpoint para autenticar la pareja
     autenticarPareja: async (username, password) => {
         const response = await axios.post(`${API_BASE_URL}/Pareja/Autenticar`, {
             username: username,
@@ -104,6 +104,53 @@ const authService = {
     obtenerParejasPorCliente: async (idCliente) => {
         const response = await axios.get(`${API_BASE_URL}/Pareja/ObtenerPorCliente`, {
             params: { idCliente: idCliente }
+        });
+        return response.data;
+    },
+    //Endpoint para traer las parejas
+    obtenerParejaPorId: async (idPareja) => {
+        const response = await axios.get(`${API_BASE_URL}/Pareja/ObtenerPareja`, {
+            params: { idPareja: idPareja }
+        });
+        return response.data;
+    },
+    //Endpoint para obtener los productos
+    obtenerProductos: async () => {
+        const response = await axios.get(`${API_BASE_URL}/Producto/ObtenerProductos`);
+        return response.data;
+    },
+
+// Endpoint para registrar la compra
+    registrarCompraPrincipal: async (datosCompra) => {
+        const response = await axios.post(`${API_BASE_URL}/Compra/CrearCompra`, datosCompra);
+        return response.data;
+    },
+
+    // Endpoint para registrar cada producto relacionado a la compa
+    registrarProductoEnCompra: async (datosDetalle) => {
+        const response = await axios.post(`${API_BASE_URL}/CompraProducto/CrearCompraProducto`, datosDetalle);
+        return response.data;
+    },
+
+    //Enpoint para restringir
+
+    crearRestriccion: async (datos) => {
+        const response = await axios.post(`${API_BASE_URL}/Restriccion/CrearRestriccion`, datos);
+        return response.data;
+    },
+    //Endpoint para obtener todasa las restricciones
+    obtenerRestriccionesPorPareja: async (idPareja) => {
+        const response = await axios.get(`${API_BASE_URL}/Restriccion/ObtenerPorPareja`, {
+            params: { idPareja: idPareja }
+        });
+        return response.data;
+    },
+    obtenerComprasPorPareja: async (idPareja) => {
+
+        const response = await axios.get(`${API_BASE_URL}/Compra/ObtenerPorPareja`, {
+            params: {
+                idPareja: idPareja
+            }
         });
         return response.data;
     }

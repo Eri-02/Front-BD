@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./Restriccion.css";
+import service from "../../service/service.js"
 
 const diasSemana = [
     "Lunes",
@@ -27,7 +28,7 @@ function AgregarRestriccion() {
         setRestriccion((prev) => ({ ...prev, [name]: value }));
     };
 
-    const guardarRestriccion = (e) => {
+    const guardarRestriccion = async (e) => {
         e.preventDefault();
 
         if (restriccion.horaInicio >= restriccion.horaFin) {
@@ -35,26 +36,21 @@ function AgregarRestriccion() {
             return;
         }
 
-        // TODO backend: reemplazar por una llamada real, por ejemplo:
-        //
-        // const payload = {
-        //     idPareja: Number(idPareja),
-        //     diaSemana: restriccion.diaSemana,
-        //     horaInicio: restriccion.horaInicio,
-        //     horaFin: restriccion.horaFin,
-        // };
-        // service.crearRestriccion(payload)
-        //     .then(() => navigate(`/parejas/${idPareja}/restricciones`))
-        //     .catch((err) => {
-        //         console.error(err);
-        //         alert("No se pudo crear la restricción.");
-        //     });
-        //
-        // Endpoint esperado: POST /Restriccion/CrearRestriccion
+        try {
+            const payload = {
+                idPareja: Number(idPareja),
+                diaSemana: restriccion.diaSemana,
+                horaInicio: restriccion.horaInicio,
+                horaFin: restriccion.horaFin,
+            };
 
-        console.log("Restricción creada (quemada):", { idPareja, ...restriccion });
-        alert("Restricción registrada correctamente");
-        navigate(`/parejas/${idPareja}/restricciones`);
+            await service.crearRestriccion(payload);
+            alert("Restricción registrada correctamente");
+            navigate(`/parejas/${idPareja}/restricciones`);
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo crear la restricción.");
+        }
     };
 
     return (

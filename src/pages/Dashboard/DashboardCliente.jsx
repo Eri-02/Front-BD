@@ -57,7 +57,6 @@ function Dashboard() {
             navigate("/login");
             return;
         }
-        //Aqui se trae toda lainfo del cupo
         const cargarDatosFinancierosYParejas = async () => {
             try {
                 const idCliente = cliente.idCliente || cliente.id;
@@ -75,26 +74,12 @@ function Dashboard() {
                     const respuestaCupo = await service.obtenerCupoConsumido(idCliente);
                     const consumidoGeneral = Number(respuestaCupo?.cupoConsumido) || 0;
                     setCupoConsumidoGeneral(consumidoGeneral);
-
-                    // Aqui se definbe el cupo restanmte
                     setCupoDisponible(total - consumidoGeneral);
 
                     const dataParejas = await service.obtenerParejasPorCliente(idCliente);
 
                     if (Array.isArray(dataParejas)) {
-                      
-                       
-                        // const parejasConConsumo = await Promise.all(
-                        //     dataParejas.map(async (p) => {
-                        //         const respConsumoPareja = await service.obtenerCupoConsumidoPorPareja(p.idPareja);
-                        //         const consumidoPareja = Number(respConsumoPareja?.cupoConsumido) || 0;
-                        //         return { ...p, consumidoPareja };
-                        //     })
-                        // );
-                        //
-                        // y usar `parejasConConsumo` en el .map() de abajo en vez de `dataParejas`,
-                        // tomando `consumidoPareja` de cada objeto en lugar del valor fijo en 0.
-                        // ---------------------------------------------------------------
+
                         const parejasMapeadas = dataParejas.map((p) => {
                             const asignado = Number(p.cupoAsignado) || 0;
                             const consumidoPareja = 0; // valor temporal hasta tener el endpoint real
@@ -285,12 +270,6 @@ function Dashboard() {
                                 </div>
                             </div>
 
-                            {/*
-                                Gráfica de consumo de cupo por pareja.
-                                Se calcula con los datos reales de "partners" (assignedRaw / usedRaw).
-                                Mientras no exista el endpoint de consumo por pareja, usedRaw viene en 0
-                                (ver el TODO en el useEffect de arriba).
-                            */}
                             <div className="col-title" style={{ fontSize: 13, marginBottom: 10 }}>
                                 Consumo por Pareja
                             </div>

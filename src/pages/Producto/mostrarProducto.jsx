@@ -1,117 +1,131 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import service from "../../service/service";
+
 import "./producto.css";
 
-// TODO backend: reemplazar por una llamada real, ej. service.obtenerProductos()
-const mockProductos = [
-    { idProducto: 1, nombre: "Arroz Diana x 500g", precio: 3200, icono: "" },
-    { idProducto: 2, nombre: "Aceite Girasol x 1L", precio: 12500, icono: "" },
-    { idProducto: 3, nombre: "Leche Entera x 1L", precio: 4300, icono: "" },
-    { idProducto: 4, nombre: "Pan Tajado Integral", precio: 6800, icono: "" },
-    { idProducto: 5, nombre: "Detergente en Polvo x 3kg", precio: 21900, icono: "" },
-    { idProducto: 6, nombre: "Huevos AA x 30", precio: 15200, icono: "" },
-];
-
-function MostrarProducto() {
+function ProductosPareja() {
     const navigate = useNavigate();
 
-    // datos quemados, sin backend
-    const [listaProductos] = useState(mockProductos);
-    const [busqueda, setBusqueda] = useState("");
+    const [pareja] = useState(() => {
+        const storedUserData = localStorage.getItem("userData");
+        return storedUserData ? JSON.parse(storedUserData) : null;
+    });
 
-    
-    // import { useEffect } from "react";
-    // const [listaProductos, setListaProductos] = useState([]);
-    // const [busqueda, setBusqueda] = useState("");
-    // const [cargando, setCargando] = useState(true);
-    //
-    // useEffect(() => {
-    //     const cargarProductos = async () => {
-    //         setCargando(true);
-    //         try {
-    //             const respuesta = await service.obtenerProductos();
-    //             const lista = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
-    //             setListaProductos(lista);
-    //         } catch (error) {
-    //             console.error("Error al cargar los productos:", error);
-    //         } finally {
-    //             setCargando(false);
-    //         }
-    //     };
-    //     cargarProductos();
-    // }, []);
+    const [listaProductos, setListaProductos] = useState([]);
+    const [busqueda, setBusqueda] = useState("");
+    const [cargando, setCargando] = useState(true);
+
+    useEffect(() => {
+        const role = localStorage.getItem("userRole");
+        if (!role || role !== "pareja" || !pareja) {
+            localStorage.clear();
+            navigate("/");
+            return;
+        }
+
+        const cargarProductosBackend = async () => {
+            setCargando(true);
+            try {
+                const respuesta = await service.obtenerProductos();
+                // El backend mapea directamente el List<ProductoDTO>
+                const lista = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
+                setListaProductos(lista);
+            } catch (error) {
+                console.error("Error al traer productos para la pareja:", error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarProductosBackend();
+    }, [pareja, navigate]);
 
     const formatearMoneda = (valor) => {
         const numero = Number(valor) || 0;
         return new Intl.NumberFormat("es-CO", {
             style: "currency",
             currency: "COP",
-            minimumFractionDigits: 0,
+            minimumFractionDigits: 0
         }).format(numero);
     };
 
-    const productosFiltrados = listaProductos.filter((producto) =>
-        (producto.nombre || "").toLowerCase().includes(busqueda.toLowerCase())
+    const productosFiltrados = listaProductos.filter((p) =>
+        (p.nombre || "").toLowerCase().includes(busqueda.toLowerCase())
     );
 
     return (
-        <div className="producto-page">
-            <div className="producto-container">
-                <div className="producto-header">
-                    <div>
-                        <h1>Catálogo de Productos</h1>
-                        <p>Consulta y administra los productos disponibles en el sistema</p>
-                    </div>
-                    <button className="btn btn-success" onClick={() => navigate("/productos/agregar")}>
-                        + Agregar Producto
-                    </button>
+        <div className="dashboard-page">
+            <div className="shell">
+                <div className="navbar">
+                    <nav className="links">
+                        <Link to="/dashboardPareja">Panel</Link>
+                        <Link to="/mis-compras">Mis Compras</Link>
+                        <Link to="/productos/pareja" className="active">Productos</Link>
+                    </nav>
                 </div>
 
-                <div className="producto-body">
-                    <div className="search-box">
-                        <input
-                            type="text"
-                            placeholder="Buscar producto por nombre..."
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                        />
-                    </div>
-
-                    {productosFiltrados.length === 0 ? (
-                        <p className="producto-empty">No se encontraron productos</p>
-                    ) : (
-                        <div className="producto-grid">
-                            {productosFiltrados.map((producto) => (
-                                <div className="producto-item-card" key={producto.idProducto}>
-                                    <p className="producto-item-id">#{producto.idProducto}</p>
-                                    <p className="producto-item-name">{producto.nombre}</p>
-                                    <p className="producto-item-price">{formatearMoneda(producto.precio)}</p>
-                                    <div className="producto-item-actions">
-                                        <button
-                                            className="btn btn-edit"
-                                            onClick={() =>
-                                                navigate(`/productos/editar/${producto.idProducto}`)
-                                            }
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            className="btn btn-delete"
-                                            onClick={() =>
-                                                navigate(`/productos/eliminar/${producto.idProducto}`)
-                                            }
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                <div className="main-grid" style={{ gridTemplateColumns: "1fr", marginTop: "20px" }}>
+                    <div className="invested-card" style={{ width: "100%" }}>
+                        <div className="col-title" style={{ marginBottom: "15px", display: "flex", justifyContent: "between", alignItems: "center" }}>
+                            <span>Catálogo de Productos Disponibles</span>
                         </div>
-                    )}
+
+                        <div className="search-box" style={{ marginBottom: "20px" }}>
+                            <input
+                                type="text"
+                                placeholder="Buscar producto por nombre..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "10px 15px",
+                                    borderRadius: "6px",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    background: "rgba(255,255,255,0.05)",
+                                    color: "#fff",
+                                    fontSize: "1rem"
+                                }}
+                            />
+                        </div>
+
+                        {cargando ? (
+                            <p style={{ color: "#aaa", padding: "10px", textAlign: "center" }}>
+                                Cargando catálogo desde el servidor...
+                            </p>
+                        ) : productosFiltrados.length === 0 ? (
+                            <p style={{ color: "#aaa", padding: "10px", textAlign: "center" }}>
+                                No se encontraron productos coincidentes.
+                            </p>
+                        ) : (
+                             <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                                gap: "20px",
+                                marginTop: "10px"
+                            }}>
+                                {productosFiltrados.map((producto) => (
+                                    <div className="mini-card" key={producto.idProducto} style={{ margin: 0, display: "flex", flexDirection: "column", justifyContent: "between" }}>
+                                        <div>
+                                            <span style={{ color: "#e8b84b", fontSize: "0.8rem", display: "block", marginBottom: "5px" }}>
+                                                #{producto.idProducto}
+                                            </span>
+                                            <div className="mini-title" style={{ fontSize: "1.1rem", marginBottom: "10px", color: "#fff" }}>
+                                                {producto.nombre}
+                                            </div>
+                                        </div>
+                                        <p className="partner-meta" style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#4caf50", marginTop: "auto" }}>
+                                            {formatearMoneda(producto.precio)}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-export default MostrarProducto;
+export default ProductosPareja;

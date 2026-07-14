@@ -1,29 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import service from "../../service/service";
 import "./producto.css";
-
-const productosQuemados = [
-    { id_producto: 1, nombre: "Leche Entera", precio: 4500 },
-    { id_producto: 2, nombre: "Pan Integral", precio: 3200 },
-    { id_producto: 3, nombre: "Huevos", precio: 8000 },
-    { id_producto: 4, nombre: "Arroz", precio: 3500 },
-    { id_producto: 5, nombre: "Frijoles", precio: 4200 },
-    { id_producto: 6, nombre: "Carne Molida", precio: 12000 },
-    { id_producto: 7, nombre: "Pollo", precio: 9500 },
-    { id_producto: 8, nombre: "Queso", precio: 8000 },
-    { id_producto: 9, nombre: "Yogur", precio: 2500 },
-    { id_producto: 10, nombre: "Cereal", precio: 4800 },
-    { id_producto: 11, nombre: "Aceite", precio: 5500 },
-    { id_producto: 12, nombre: "Azúcar", precio: 3800 },
-];
 
 function ProductosCompra() {
     const navigate = useNavigate();
+    const [productos, setProductos] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [busqueda, setBusqueda] = useState("");
     const [carrito, setCarrito] = useState([]);
     const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+    const [comprando, setComprando] = useState(false);
 
-    const cupoDisponible = 1850000;
+    const [almacenes, setAlmacenes] = useState([]);
+    const [almacenSeleccionado, setAlmacenSeleccionado] = useState(null);
+    const [mostrarModalAlmacen, setMostrarModalAlmacen] = useState(true);
+
+    const [pareja] = useState(() => {
+        const storedUserData = localStorage.getItem("userData");
+        if (storedUserData) {
+            try {
+                return JSON.parse(storedUserData);
+            } catch (e) {
+                console.error("Error al parsear userData en ProductosCompra:", e);
+                return null;
+            }
+        }
+        return null;
+    });
+
+    const cupoConsumido = 0;
+    const cupoAsignado = Number(pareja?.cupoAsignado) || 3000000;
+    const cupoDisponible = cupoAsignado - cupoConsumido;
+
+    useEffect(() => {
+        const cargarDatos = async () => {
+            try {
+                const [productosData, almacenesData] = await Promise.all([
+                    service.obtenerProductos(),
+                    service.obtenerAlmacenes()
+                ]);
+
+                const listaProductos =
+                    productosData?.productos ||
+                    productosData?.data ||
+                    productosData ||
+                    [];
+
+                setProductos(listaProductos);
+                setAlmacenes(almacenesData);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        cargarDatos();
+    }, []);
+    const seleccionarAlmacen = (almacen) => {
+        setAlmacenSeleccionado(almacen);
+        setMostrarModalAlmacen(false);
+    };
 
     const formatearMoneda = (valor) => {
         const numero = Number(valor) || 0;
@@ -34,17 +72,19 @@ function ProductosCompra() {
         }).format(numero);
     };
 
-    const productosFiltrados = productosQuemados.filter((p) => {
+    const productosFiltrados = productos.filter((p) => {
         const termino = busqueda.toLowerCase();
-        return p.nombre.toLowerCase().includes(termino);
+        const nombre = p.nombre || p.nombreProducto || "";
+        return nombre.toLowerCase().includes(termino);
     });
 
     const agregarAlCarrito = (producto) => {
+        const idProducto = producto.id_producto || producto.idProducto;
         setCarrito((prev) => {
-            const existente = prev.find((item) => item.id_producto === producto.id_producto);
+            const existente = prev.find((item) => (item.id_producto || item.idProducto) === idProducto);
             if (existente) {
                 return prev.map((item) =>
-                    item.id_producto === producto.id_producto
+                    (item.id_producto || item.idProducto) === idProducto
                         ? { ...item, cantidad: item.cantidad + 1 }
                         : item
                 );
@@ -55,19 +95,22 @@ function ProductosCompra() {
 
     const eliminarDelCarrito = (id_producto) => {
         setCarrito((prev) => {
-            const existente = prev.find((item) => item.id_producto === id_producto);
+            const existente = prev.find((item) => (item.id_producto || item.idProducto) === id_producto);
             if (existente && existente.cantidad > 1) {
                 return prev.map((item) =>
-                    item.id_producto === id_producto
+                    (item.id_producto || item.idProducto) === id_producto
                         ? { ...item, cantidad: item.cantidad - 1 }
                         : item
                 );
             }
-            return prev.filter((item) => item.id_producto !== id_producto);
+            return prev.filter((item) => (item.id_producto || item.idProducto) !== id_producto);
         });
     };
 
-    const totalCarrito = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const totalCarrito = carrito.reduce((sum, item) => {
+        const precio = item.precio || item.precioProducto || 0;
+        return sum + (precio * item.cantidad);
+    }, 0);
 
     const handlePagar = () => {
         if (carrito.length === 0) {
@@ -81,23 +124,99 @@ function ProductosCompra() {
         setMostrarConfirmacion(true);
     };
 
-    const confirmarPago = () => {
-        setMostrarConfirmacion(false);
-        alert(`¡Compra realizada con éxito! Total: ${formatearMoneda(totalCarrito)}`);
-        setCarrito([]);
+    const confirmarPago = async () => {
+        setComprando(true);
+        try {
+
+            const ahora = new Date();
+            const fechaStr = ahora.toISOString().split("T")[0];
+            const horaStr = ahora.toTimeString().split(" ")[0];
+
+            const datosCompra = {
+                idPareja: pareja?.idPareja || 1,
+                idAlmacen: almacenSeleccionado.idAlmacen,
+                monto: totalCarrito,
+                fecha: fechaStr,
+                hora: horaStr
+            };
+
+             const respuestaCompra = await service.registrarCompraPrincipal(datosCompra);
+            const idCompraGenerado = respuestaCompra.idCompra;
+
+            if (idCompraGenerado) {
+                 for (const item of carrito) {
+                    const idProducto = item.id_producto || item.idProducto;
+      for (let i = 0; i < item.cantidad; i++) {
+                        const datosDetalle = {
+                            idCompra: idCompraGenerado,
+                            idProducto: idProducto
+                        };
+                        await service.registrarProductoEnCompra(datosDetalle);
+                    }
+                }
+
+                alert(`¡Compra realizada con éxito! Código de transacción: ${idCompraGenerado}`);
+                setCarrito([]);
+                setMostrarConfirmacion(false);
+                navigate("/dashboardPareja");
+            } else {
+                alert("La compra fue procesada pero el servidor no retornó el ID correspondiente.");
+            }
+
+        } catch (error) {
+            console.error("Error en la pasarela de compra:", error);
+            const mensajeError = error.response?.data?.message || "Ocurrió un inconveniente al procesar el pago.";
+            alert(`Error al pagar: ${mensajeError}`);
+        } finally {
+            setComprando(false);
+        }
     };
 
     return (
+
         <div className="producto-page">
+            {mostrarModalAlmacen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>Seleccione un almacén</h3>
+                        </div>
+
+                        <div style={{ padding: "20px" }}>
+                            <p>¿Desde qué almacén deseas comprar?</p>
+
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "12px",
+                                    marginTop: "20px"
+                                }}
+                            >
+                                {almacenes.map((almacen) => (
+                                    <button
+                                        key={almacen.idAlmacen}
+                                        className="btn btn-success"
+                                        onClick={() => seleccionarAlmacen(almacen)}
+                                    >
+                                        {almacen.nombre}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="producto-container">
                 <div className="producto-header">
                     <div>
                         <h1>Productos</h1>
-                        <p>Selecciona los productos que deseas comprar</p>
+                        <p>Selecciona los productos que deseas comprar desde la base de datos</p>
                     </div>
-                    <button 
-                        className="btn btn-secondary" 
+                    <button
+                        className="btn btn-secondary"
                         onClick={() => navigate("/dashboardPareja")}
+                        disabled={comprando}
                     >
                         ← Volver al Dashboard
                     </button>
@@ -112,34 +231,44 @@ function ProductosCompra() {
                                     placeholder="Buscar productos..."
                                     value={busqueda}
                                     onChange={(e) => setBusqueda(e.target.value)}
+                                    disabled={comprando}
                                 />
                             </div>
 
                             <div className="producto-grid">
-                                {productosFiltrados.length === 0 ? (
+                                {loading ? (
+                                    <p className="producto-empty" style={{ color: "#e8b84b" }}>Cargando catálogo de productos...</p>
+                                ) : productosFiltrados.length === 0 ? (
                                     <p className="producto-empty">No se encontraron productos</p>
                                 ) : (
-                                    productosFiltrados.map((p) => (
-                                        <div className="producto-item-card" key={p.id_producto}>
-                                            <p className="producto-item-name">{p.nombre}</p>
-                                            <p className="producto-item-id">ID: {p.id_producto}</p>
-                                            <p className="producto-item-price">{formatearMoneda(p.precio)}</p>
-                                            <div className="producto-item-actions">
-                                                <button
-                                                    className="btn btn-success"
-                                                    onClick={() => agregarAlCarrito(p)}
-                                                >
-                                                    Agregar
-                                                </button>
+                                    productosFiltrados.map((p) => {
+                                        const id = p.id_producto || p.idProducto;
+                                        const nombre = p.nombre || p.nombreProducto || "Producto sin nombre";
+                                        const precio = p.precio || p.precioProducto || 0;
+
+                                        return (
+                                            <div className="producto-item-card" key={id}>
+                                                <p className="producto-item-name">{nombre}</p>
+                                                <p className="producto-item-id">ID: {id}</p>
+                                                <p className="producto-item-price">{formatearMoneda(precio)}</p>
+                                                <div className="producto-item-actions">
+                                                    <button
+                                                        className="btn btn-success"
+                                                        onClick={() => agregarAlCarrito(p)}
+                                                        disabled={comprando}
+                                                    >
+                                                        Agregar
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
 
-                        <div style={{ 
-                            width: "340px", 
+                        <div style={{
+                            width: "340px",
                             flexShrink: 0,
                             background: "var(--input)",
                             borderRadius: "16px",
@@ -148,7 +277,7 @@ function ProductosCompra() {
                             display: "flex",
                             flexDirection: "column"
                         }}>
-                            <h3 style={{ 
+                            <h3 style={{
                                 fontFamily: "'Fraunces', serif",
                                 fontSize: "18px",
                                 fontWeight: "600",
@@ -173,53 +302,61 @@ function ProductosCompra() {
                                         No hay productos en el carrito
                                     </p>
                                 ) : (
-                                    carrito.map((item) => (
-                                        <div key={item.id_producto} style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            padding: "10px 0",
-                                            borderBottom: "1px solid var(--border)"
-                                        }}>
-                                            <div style={{ flex: 1 }}>
-                                                <p style={{ fontSize: "13px", fontWeight: "600", margin: 0 }}>
-                                                    {item.nombre}
-                                                </p>
-                                                <p style={{ fontSize: "12px", color: "var(--muted)", margin: 0 }}>
-                                                    {formatearMoneda(item.precio)}
-                                                </p>
+                                    carrito.map((item) => {
+                                        const id = item.id_producto || item.idProducto;
+                                        const nombre = item.nombre || item.nombreProducto;
+                                        const precio = item.precio || item.precioProducto || 0;
+
+                                        return (
+                                            <div key={id} style={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                padding: "10px 0",
+                                                borderBottom: "1px solid var(--border)"
+                                            }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <p style={{ fontSize: "13px", fontWeight: "600", margin: 0 }}>
+                                                        {nombre}
+                                                    </p>
+                                                    <p style={{ fontSize: "12px", color: "var(--muted)", margin: 0 }}>
+                                                        {formatearMoneda(precio)}
+                                                    </p>
+                                                </div>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                    <button
+                                                        className="btn"
+                                                        style={{
+                                                            background: "var(--secondary-light)",
+                                                            padding: "4px 10px",
+                                                            fontSize: "14px",
+                                                            borderRadius: "6px"
+                                                        }}
+                                                        onClick={() => eliminarDelCarrito(id)}
+                                                        disabled={comprando}
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span style={{ fontSize: "14px", fontWeight: "700", minWidth: "20px", textAlign: "center" }}>
+                                                        {item.cantidad}
+                                                    </span>
+                                                    <button
+                                                        className="btn"
+                                                        style={{
+                                                            background: "var(--secondary-light)",
+                                                            padding: "4px 10px",
+                                                            fontSize: "14px",
+                                                            borderRadius: "6px"
+                                                        }}
+                                                        onClick={() => agregarAlCarrito(item)}
+                                                        disabled={comprando}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                <button
-                                                    className="btn"
-                                                    style={{
-                                                        background: "var(--secondary-light)",
-                                                        padding: "4px 10px",
-                                                        fontSize: "14px",
-                                                        borderRadius: "6px"
-                                                    }}
-                                                    onClick={() => eliminarDelCarrito(item.id_producto)}
-                                                >
-                                                    -
-                                                </button>
-                                                <span style={{ fontSize: "14px", fontWeight: "700", minWidth: "20px", textAlign: "center" }}>
-                                                    {item.cantidad}
-                                                </span>
-                                                <button
-                                                    className="btn"
-                                                    style={{
-                                                        background: "var(--secondary-light)",
-                                                        padding: "4px 10px",
-                                                        fontSize: "14px",
-                                                        borderRadius: "6px"
-                                                    }}
-                                                    onClick={() => agregarAlCarrito(item)}
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
 
@@ -233,13 +370,14 @@ function ProductosCompra() {
                                 }}>
                                     <p style={{ fontSize: "16px", fontWeight: "600", margin: 0 }}>
                                         Total: <strong style={{ color: "var(--secondary)" }}>
-                                            {formatearMoneda(totalCarrito)}
-                                        </strong>
+                                        {formatearMoneda(totalCarrito)}
+                                    </strong>
                                     </p>
                                     <button
                                         className="btn btn-success"
                                         style={{ padding: "12px 24px", fontSize: "14px" }}
                                         onClick={handlePagar}
+                                        disabled={comprando}
                                     >
                                         Pagar
                                     </button>
@@ -251,16 +389,16 @@ function ProductosCompra() {
             </div>
 
             {mostrarConfirmacion && (
-                <div className="modal-overlay" onClick={() => setMostrarConfirmacion(false)}>
+                <div className="modal-overlay" onClick={() => !comprando && setMostrarConfirmacion(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Confirmar Compra</h3>
-                            <button className="btn-close" onClick={() => setMostrarConfirmacion(false)}>×</button>
+                            {!comprando && <button className="btn-close" onClick={() => setMostrarConfirmacion(false)}>×</button>}
                         </div>
 
                         <div style={{ padding: "10px 0" }}>
                             <p style={{ fontSize: "15px", textAlign: "center", marginBottom: "16px" }}>
-                                ¿Estás seguro de realizar esta compra?
+                                {comprando ? "Enviando datos al servidor..." : "¿Estás seguro de realizar esta compra?"}
                             </p>
                             <div style={{
                                 background: "var(--input)",
@@ -269,16 +407,16 @@ function ProductosCompra() {
                                 marginBottom: "20px"
                             }}>
                                 <p style={{ fontSize: "14px", margin: "6px 0" }}>
-                                    <strong>Productos:</strong> {carrito.length}
+                                    <strong>Productos únicos:</strong> {carrito.length}
                                 </p>
                                 <p style={{ fontSize: "14px", margin: "6px 0" }}>
-                                    <strong>Total:</strong> {formatearMoneda(totalCarrito)}
+                                    <strong>Total a descontar:</strong> {formatearMoneda(totalCarrito)}
                                 </p>
                                 <p style={{ fontSize: "14px", margin: "6px 0" }}>
                                     <strong>Cupo disponible:</strong> {formatearMoneda(cupoDisponible)}
                                 </p>
                                 <p style={{ fontSize: "14px", margin: "6px 0" }}>
-                                    <strong>Saldo después:</strong> {formatearMoneda(cupoDisponible - totalCarrito)}
+                                    <strong>Cupo restante:</strong> {formatearMoneda(cupoDisponible - totalCarrito)}
                                 </p>
                             </div>
 
@@ -287,6 +425,7 @@ function ProductosCompra() {
                                     className="btn btn-secondary"
                                     onClick={() => setMostrarConfirmacion(false)}
                                     style={{ padding: "10px 24px" }}
+                                    disabled={comprando}
                                 >
                                     Cancelar
                                 </button>
@@ -294,8 +433,9 @@ function ProductosCompra() {
                                     className="btn btn-success"
                                     onClick={confirmarPago}
                                     style={{ padding: "10px 24px" }}
+                                    disabled={comprando}
                                 >
-                                    Aceptar
+                                    {comprando ? "Procesando..." : "Aceptar"}
                                 </button>
                             </div>
                         </div>
