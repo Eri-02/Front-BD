@@ -28,7 +28,7 @@ function ProductosPareja() {
             setCargando(true);
             try {
                 const respuesta = await service.obtenerProductos();
-                // El backend mapea directamente el List<ProductoDTO>
+
                 const lista = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
                 setListaProductos(lista);
             } catch (error) {

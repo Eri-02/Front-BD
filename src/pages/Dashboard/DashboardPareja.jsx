@@ -17,6 +17,9 @@ function DashboardPareja() {
     const [compras, setCompras] = useState([]);
     const [restricciones, setRestricciones] = useState([]);
     const [filterAlmacen, setFilterAlmacen] = useState("");
+    const [montoSobrecupo, setMontoSobrecupo] = useState("");
+    const [almacenes, setAlmacenes] = useState([]);
+    const [almacenSobrecupo, setAlmacenSobrecupo] = useState("");
 
     useEffect(() => {
         const role = localStorage.getItem("userRole");
@@ -53,6 +56,10 @@ function DashboardPareja() {
                     const resCliente = await service.obtenerClientePorId(parejaFresh.idCliente);
                     setCliente(resCliente?.cliente || resCliente?.data || resCliente);
                 }
+
+
+                const resAlmacenes = await service.obtenerAlmacenes();
+                setAlmacenes(Array.isArray(resAlmacenes) ? resAlmacenes : (resAlmacenes?.data || []));
             } catch (error) {
                 console.error("Error al cargar:", error);
             } finally {
@@ -62,6 +69,38 @@ function DashboardPareja() {
 
         cargarTodo();
     }, [navigate]);
+    const generarSobrecupo = async () => {
+
+        if (!almacenSobrecupo) {
+            alert("Por favor selecciona un almacén.");
+            return;
+        }
+
+        if (!montoSobrecupo || Number(montoSobrecupo) <= 0) {
+            alert("Ingresa un monto válido.");
+            return;
+        }
+
+        try {
+            const datos = {
+                idPareja: pareja.idPareja,
+                idAlmacen: Number(almacenSobrecupo),
+                montoSobrecupo: Number(montoSobrecupo)
+            };
+
+            console.log("Enviando ID Almacén:", datos.idAlmacen);
+            await service.solicitarSobrecupo(datos);
+
+            alert("¡Solicitud enviada con éxito al almacén " + almacenSobrecupo );
+            setMontoSobrecupo("");
+            setAlmacenSobrecupo("");
+        } catch (error) {
+            alert("Error: " + (error.message || "El almacén seleccionado no tiene supervisor"));
+        }
+    };
+
+
+
 
     const formatearMoneda = (v) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(Number(v) || 0);
     const formatearHora = (h) => (h ? h.substring(0, 5) : "-");
@@ -119,8 +158,90 @@ function DashboardPareja() {
                     </div>
                 </div>
 
+
+                {/*CAMBAIR ESTOOOOO PROVISIONAL PARA GENERAR LOS SOBRECUPOS*/}
                 <div className="main-grid">
                     <div>
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: "380px",
+                                right: "200px",
+                                width: "260px",
+                                background: "white",
+                                borderRadius: "14px",
+                                padding: "18px",
+                                border: "1px solid rgba(255,255,255,0.08)"
+                            }}
+                        >
+                            <h4
+                                style={{
+                                    margin: 0,
+                                    marginBottom: "12px",
+                                    color: "black",
+                                    fontSize: "15px"
+                                }}
+                            >
+                                Generar solicitud de sobrecupo
+                            </h4>
+
+                            <input
+                                type="number"
+                                placeholder="Monto solicitado"
+                                value={montoSobrecupo}
+                                onChange={(e) => setMontoSobrecupo(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    border: "1px solid #555",
+                                    background: "white",
+                                    color: "black",
+                                    marginBottom: "12px",
+                                    boxSizing: "border-box"
+                                }}
+                            />
+                            <select
+                                value={almacenSobrecupo}
+                                onChange={(e) => setAlmacenSobrecupo(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    border: "1px solid #555",
+                                    background: "white",
+                                    color: "black",
+                                    marginBottom: "12px",
+                                    boxSizing: "border-box"
+                                }}
+                            >
+                                <option value="">Seleccione un almacén</option>
+
+                                {almacenes.map((almacen) => (
+                                    <option
+                                        key={almacen.idAlmacen || almacen.id_almacen}
+                                        value={almacen.idAlmacen || almacen.id_almacen}
+                                    >
+                                        {almacen.nombre || almacen.nombreAlmacen}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                style={{
+                                    width: "100%",
+                                    padding: "10px",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    background: "white",
+                                    color: "black",
+                                    fontWeight: "bold",
+                                    cursor: "pointer"
+                                }}
+                                onClick={generarSobrecupo}
+                            >
+                                Generar
+                            </button>
+                        </div>
                         <div className="col-title">Mis Restricciones <span className="minus">—</span></div>
                         {restricciones.length === 0 ? <p style={{ color: "#aaa", padding: "10px" }}>Sin restricciones activas.</p> :
                             restricciones.map((r) => (
@@ -131,6 +252,17 @@ function DashboardPareja() {
                             ))
                         }
                     </div>
+
+
+
+
+
+
+
+
+
+
+
 
                     <div>
                         <div className="invested-card">

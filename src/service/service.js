@@ -153,7 +153,42 @@ const authService = {
             }
         });
         return response.data;
-    }
+    },
+    solicitarSobrecupo: async (datos) => {
+        const response = await fetch(`${API_BASE_URL}/Sobrecupo/Solicitar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        if (!response.ok) throw await response.json();
+        return response.json();
+    },
+    obtenerSobrecuposSupervisor: async (idSupervisor) => {
+        const response = await fetch(`${API_BASE_URL}/Sobrecupo/ObtenerPorSupervisor?idSupervisor=${idSupervisor}`);
+        if (!response.ok) throw await response.json();
+        return response.json();
+    },
+    //Endpoint para escalar de supervisor a cliente
+    escalarSobrecupo: async (idSobrecupo, escalar) => {
+        const response = await fetch(`${API_BASE_URL}/Sobrecupo/Escalar?idSobrecupo=${idSobrecupo}&escalar=${escalar}`, {
+            method: 'PUT'
+        });
+        if (!response.ok) throw await response.json();
+        return response.json();
+    },
+    //Endpoint para la respuesta a al autorizacion de sobrecupo
+    responderSobrecupo: async (idSobrecupo, aprobado) => {
+        const response = await fetch(`${API_BASE_URL}/Sobrecupo/ResponderCliente?idSobrecupo=${idSobrecupo}&aprobado=${aprobado}`, {
+            method: 'PUT'
+        });
+        if (!response.ok) throw await response.json();
+        return response.json();
+    },
+    //Endpoinnt para obtener los asobrecupos
+    obtenerSobrecuposPorCliente: async (idCliente) => {
+        const response = await fetch(`${API_BASE_URL}/Sobrecupo/ObtenerPorCliente?idCliente=${idCliente}`);
+        return await response.json();
+    },
 
 };
 

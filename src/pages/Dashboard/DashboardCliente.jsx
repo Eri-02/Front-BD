@@ -14,7 +14,7 @@ const overlimits = [
 ];
 
 const statusLabel = {
-    pendiente: "Pendiente",
+    esperando_cliente: "Pendiente de Autorización",
     aprobado: "Aprobado",
     rechazado: "Rechazado",
 };
@@ -28,7 +28,7 @@ function Dashboard() {
             try {
                 return JSON.parse(storedUserData);
             } catch (e) {
-                console.error("Error al parsear userData inicial:", e);
+                console.error("Error:", e);
                 return null;
             }
         }
@@ -40,6 +40,7 @@ function Dashboard() {
     const [cupoTotalReal, setCupoTotalReal] = useState(0);
 
     const [partners, setPartners] = useState([]);
+    const [overlimits, setOverlimits] = useState([]);
     const [loadingPartners, setLoadingPartners] = useState(true);
 
     const [filterPartner, setFilterPartner] = useState("");
@@ -48,7 +49,12 @@ function Dashboard() {
         monto: "",
         motivo: "",
     });
-
+    const statusLabel = {
+        pendiente: "Pendiente",
+        aprobado: "Aprobado",
+        rechazado: "Rechazado",
+        esperando_cliente: "Requiere Autorización"
+    };
     useEffect(() => {
         const role = localStorage.getItem("userRole");
 
@@ -57,66 +63,86 @@ function Dashboard() {
             navigate("/login");
             return;
         }
+
         const cargarDatosFinancierosYParejas = async () => {
             try {
                 const idCliente = cliente.idCliente || cliente.id;
 
-                if (idCliente) {
+                if (!idCliente) return;
 
-                    const respuestaCliente = await service.obtenerClientePorId(idCliente);
-                    const clienteData = respuestaCliente?.cliente || respuestaCliente?.data || respuestaCliente;
+                const respuestaCliente = await service.obtenerClientePorId(idCliente);
+                const clienteData = respuestaCliente?.cliente || respuestaCliente?.data || respuestaCliente;
+                setCupoTotalReal(Number(clienteData?.cupoTotal) || 0);
 
+                const respuestaCupo = await service.obtenerCupoConsumido(idCliente);
+                const consumido = Number(respuestaCupo?.cupoConsumido) || 0;
+                setCupoConsumidoGeneral(consumido);
+                setCupoDisponible((Number(clienteData?.cupoTotal) || 0) - consumido);
 
-                    const total = Number(clienteData?.cupoTotal) || Number(cliente.cupoTotal) || 0;
-                    setCupoTotalReal(total);
-
-
-                    const respuestaCupo = await service.obtenerCupoConsumido(idCliente);
-                    const consumidoGeneral = Number(respuestaCupo?.cupoConsumido) || 0;
-                    setCupoConsumidoGeneral(consumidoGeneral);
-                    setCupoDisponible(total - consumidoGeneral);
-
-                    const dataParejas = await service.obtenerParejasPorCliente(idCliente);
-
-                    if (Array.isArray(dataParejas)) {
-
-                        const parejasMapeadas = dataParejas.map((p) => {
-                            const asignado = Number(p.cupoAsignado) || 0;
-                            const consumidoPareja = 0; // valor temporal hasta tener el endpoint real
-                            const progreso = asignado > 0 ? Math.min((consumidoPareja / asignado) * 100, 100) : 0;
-
-                            return {
-                                id: p.idPareja,
-                                name: `${p.primerNombre} ${p.primerApellido}`,
-                                assignedRaw: asignado,
-                                usedRaw: consumidoPareja,
-                                assigned: `$${asignado.toLocaleString("es-CO")}`,
-                                used: `$${consumidoPareja.toLocaleString("es-CO")}`,
-                                progress: progreso,
-                                avatars: ["img/imagen.png"]
-                            };
-                        });
-
-                        setPartners(parejasMapeadas);
-
-                        if (parejasMapeadas.length > 0) {
-                            setRequestForm((prev) => ({ ...prev, pareja: parejasMapeadas[0].name }));
-                        }
-                    }
+                const dataParejas = await service.obtenerParejasPorCliente(idCliente);
+                if (Array.isArray(dataParejas)) {
+                    setPartners(dataParejas.map(p => ({
+                        id: p.idPareja,
+                        name: `${p.primerNombre} ${p.primerApellido}`,
+                        avatars: ["/img/imagen.png"],
+                        assignedRaw: Number(p.cupoAsignado) || 0
+                    })));
                 }
+
+                try {
+                    const dataSobrecupos = await service.obtenerSobrecuposPorCliente(idCliente);
+                    if (Array.isArray(dataSobrecupos)) {
+                        setOverlimits(dataSobrecupos.map(s => {
+                            return {
+                                id: s.idSobrecupo,
+                                name: `Pareja ID: ${s.idPareja}`,
+                                amount: formatearMoneda(s.montoSobrecupo),
+                                status: s.estadoSobrecupo ? s.estadoSobrecupo.toLowerCase() : "pendiente",
+                                avatars: ["/img/imagen.png"]
+                            };
+                        }));
+                    }
+                } catch (e) {
+                    console.warn("error:", e);
+                }
+
             } catch (error) {
-                console.error("Error al sincronizar datos:", error);
+                console.error("Erro:", error);
             } finally {
                 setLoadingPartners(false);
             }
         };
 
         cargarDatosFinancierosYParejas();
+
+
+
     }, [cliente, navigate]);
 
     const handleRequestChange = (e) => {
         const { id, value } = e.target;
         setRequestForm((prev) => ({ ...prev, [id]: value }));
+    };
+    const handleResponderSobrecupo = async (idSobrecupo, aprobado) => {
+        try {
+            await service.responderSobrecupo(idSobrecupo, aprobado);
+
+            const idCliente = cliente.idCliente || cliente.id;
+            const data = await service.obtenerSobrecuposPorCliente(idCliente);
+
+            setOverlimits(Array.isArray(data) ? data.map(s => ({
+                id: s.idSobrecupo,
+                name: `Pareja ID: ${s.idPareja}`,
+                amount: formatearMoneda(s.montoSobrecupo),
+                status: s.estadoSobrecupo.toLowerCase(),
+                avatars: ["/img/imagen.png"]
+            })) : []);
+
+            alert(aprobado ? "Solicitud autorizada correctamente" : "Solicitud rechazada");
+        } catch (error) {
+            console.error("Error al responder:", error);
+            alert("Hubo un problema al procesar la respuesta.");
+        }
     };
 
     const handleRequestSubmit = (e) => {
@@ -353,24 +379,48 @@ function Dashboard() {
                         <div className="mini-card">
                             <div className="mini-title">Sobrecupos Activos</div>
 
-                            {overlimits.map((o) => (
-                                <div className="sobrecupo-item" key={o.id}>
-                                    <div className="sc-left">
-                                        <div className="sc-avatars">
-                                            {o.avatars.map((src, i) => (
-                                                <img key={i} src={src} alt={o.name} />
-                                            ))}
+                            {overlimits.length === 0 ? (
+                                <p style={{ color: "#aaa", padding: "10px", fontSize: "13px" }}>No hay solicitudes pendientes.</p>
+                            ) : (
+                                overlimits.map((o) => (
+                                    <div className="sobrecupo-item" key={o.id}>
+                                        <div className="sc-left">
+                                            <div className="sc-avatars">
+                                                {o.avatars.map((src, i) => (
+                                                    <img key={i} src={src} alt={o.name} />
+                                                ))}
+                                            </div>
+                                            <div>
+                                                <p className="sc-name">{o.name}</p>
+                                                <p className="sc-amount">{o.amount}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="sc-name">{o.name}</p>
-                                            <p className="sc-amount">{o.amount}</p>
-                                        </div>
+
+                                        {o.status === "esperando_cliente" ? (
+                                            <div className="alert-actions" style={{ display: "flex", gap: "8px" }}>
+                                                <button
+                                                    className="btn-approve"
+                                                    style={{ padding: "4px 8px", cursor: "pointer" }}
+                                                    onClick={() => handleResponderSobrecupo(o.id, true)}
+                                                >
+                                                    Autorizar
+                                                </button>
+                                                <button
+                                                    className="btn-reject"
+                                                    style={{ padding: "4px 8px", cursor: "pointer" }}
+                                                    onClick={() => handleResponderSobrecupo(o.id, false)}
+                                                >
+                                                    Rechazar
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className={`badge ${o.status}`}>
+                            {statusLabel[o.status] || o.status}
+                        </span>
+                                        )}
                                     </div>
-                                    <span className={`badge ${o.status}`}>
-                                        {statusLabel[o.status]}
-                                    </span>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
 
                         <div className="mini-card">
@@ -413,7 +463,7 @@ function Dashboard() {
                                     />
                                 </div>
                                 <button type="submit" className="btn-solicitar" disabled={partners.length === 0}>
-                                    Enviar Solicitud  de aprobación sobrecupo
+                                    Enviar Solicitud de aprobación sobrecupo
                                 </button>
                             </form>
                             <p className="form-hint">
@@ -421,6 +471,10 @@ function Dashboard() {
                             </p>
                         </div>
                     </div>
+
+
+
+
                 </div>
             </div>
         </div>
