@@ -118,7 +118,7 @@ nav.links a.active::after{
 }
 .progress-fill{height:100%; background:var(--secondary); border-radius:6px;}
 
-/* Centro: Mis Gastos */
+/* Centro: Mis Compras */
 .invested-card{
   background:var(--white);
   border-radius:20px;
@@ -136,18 +136,6 @@ nav.links a.active::after{
 .spend-item.gasto .val{color:var(--danger);}
 .spend-item.compra .val{color:var(--success);}
 
-.filter-select{
-  width:100%;
-  margin-top:8px;
-  padding:11px 14px;
-  border-radius:10px;
-  border:1px solid #eee6d3;
-  background:#fbf9f2;
-  font-size:13px;
-  color:var(--text);
-  font-family:'Manrope',sans-serif;
-  font-weight:600;
-}
 .tx-table{
   width:100%;
   border-collapse:collapse;
@@ -181,6 +169,43 @@ nav.links a.active::after{
   margin-bottom:16px;
 }
 .mini-title{font-family:'Fraunces', serif; font-size:15px; font-weight:600; margin:0 0 14px; display:flex; align-items:center; gap:6px;}
+
+.request-form .field{margin-bottom:14px;}
+.request-form label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:6px;
+}
+.request-form select,
+.request-form input{
+  width:100%;
+  padding:11px 13px;
+  border-radius:10px;
+  border:1.5px solid #ece7d9;
+  background:#fbf9f2;
+  font-family:'Manrope', sans-serif;
+  font-size:13px;
+  color:var(--text);
+  outline:none;
+  box-sizing:border-box;
+}
+.request-form select:focus,
+.request-form input:focus{border-color:var(--secondary); background:#fff;}
+.btn-solicitar{
+  width:100%;
+  background:var(--secondary);
+  border:none;
+  color:var(--primary-dark);
+  font-weight:800;
+  font-size:13.5px;
+  padding:12px 0;
+  border-radius:10px;
+  cursor:pointer;
+  transition:filter .15s ease;
+}
+.btn-solicitar:hover{filter:brightness(1.05);}
 
 .badge{
   font-size:10.5px;

@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
+import "../../validation/validacion.css";
 import service from "../../service/service.js";
+import {
+    validarRequerido,
+    validarEmail,
+    validarLongitudMinima,
+    validarNumeroPositivo,
+    validarSeleccion,
+    claseCampo,
+    hayErrores,
+} from "../../validation/validaciones.js";
 
 function Login() {
     const navigate = useNavigate();
@@ -12,6 +22,8 @@ function Login() {
         user: "",
         password: "",
     });
+    const [erroresLogin, setErroresLogin] = useState({});
+    const [tocadosLogin, setTocadosLogin] = useState({});
 
     const [showLoginPass, setShowLoginPass] = useState(false);
 
@@ -26,6 +38,8 @@ function Login() {
         cupoTotal: 0,
         idAlmacen: "",
     });
+    const [erroresRegistro, setErroresRegistro] = useState({});
+    const [tocadosRegistro, setTocadosRegistro] = useState({});
 
     const [showSignupPass, setShowSignupPass] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
@@ -43,12 +57,51 @@ function Login() {
         }
     }, [activeTab, rolUsuario]);
 
+    // ---------- Validación: LOGIN ----------
+    const validarCampoLogin = (id, valor) => {
+        if (id === "user") return validarRequerido(valor, "El usuario");
+        if (id === "password") return validarRequerido(valor, "La contraseña");
+        return "";
+    };
+
     const handleLoginChange = (e) => {
         const { id, value } = e.target;
         setLoginData((prev) => ({
             ...prev,
             [id]: value,
         }));
+
+        if (tocadosLogin[id]) {
+            setErroresLogin((prev) => ({ ...prev, [id]: validarCampoLogin(id, value) }));
+        }
+    };
+
+    const handleLoginBlur = (e) => {
+        const { id, value } = e.target;
+        setTocadosLogin((prev) => ({ ...prev, [id]: true }));
+        setErroresLogin((prev) => ({ ...prev, [id]: validarCampoLogin(id, value) }));
+    };
+
+    // ---------- Validación: REGISTRO ----------
+    const validarCampoSignup = (id, valor) => {
+        switch (id) {
+            case "primerNombre":
+                return validarRequerido(valor, "El primer nombre");
+            case "primerApellido":
+                return validarRequerido(valor, "El primer apellido");
+            case "nombreUsuario":
+                return validarLongitudMinima(valor, 4, "El usuario");
+            case "correoElectronico":
+                return validarEmail(valor);
+            case "contraseniaUsuario":
+                return validarLongitudMinima(valor, 8, "La contraseña");
+            case "idAlmacen":
+                return rolUsuario === "supervisor" ? validarSeleccion(valor, "Selecciona un almacén") : "";
+            case "cupoTotal":
+                return rolUsuario !== "supervisor" ? validarNumeroPositivo(valor, "El cupo") : "";
+            default:
+                return "";
+        }
     };
 
     const handleSignupChange = (e) => {
@@ -65,62 +118,100 @@ function Login() {
             if (/[^A-Za-z0-9]/.test(value) && value.length >= 10) score++;
             setPasswordStrength(score);
         }
+
+        if (tocadosRegistro[id]) {
+            setErroresRegistro((prev) => ({ ...prev, [id]: validarCampoSignup(id, value) }));
+        }
+    };
+
+    const handleSignupBlur = (e) => {
+        const { id, value } = e.target;
+        setTocadosRegistro((prev) => ({ ...prev, [id]: true }));
+        setErroresRegistro((prev) => ({ ...prev, [id]: validarCampoSignup(id, value) }));
     };
 
     const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!loginData.user || !loginData.password) {
-        alert("Por favor ingresa usuario y contraseña");
-        return;
-    }
+        e.preventDefault();
 
-    try {
-        let respuesta;
-        
-        
-        if (rolUsuario === "supervisor") {
-            respuesta = await service.autenticarSupervisor(loginData.user, loginData.password);
-        } else if (rolUsuario === "pareja") {
-            respuesta = await service.autenticarPareja(loginData.user, loginData.password);
-        } else {
-            // Cliente (default)
-            respuesta = await service.autenticarCliente(loginData.user, loginData.password);
+        const nuevosErrores = {
+            user: validarCampoLogin("user", loginData.user),
+            password: validarCampoLogin("password", loginData.password),
+        };
+        setErroresLogin(nuevosErrores);
+        setTocadosLogin({ user: true, password: true });
+
+        if (hayErrores(nuevosErrores)) {
+            return;
         }
 
-        
-        if (respuesta && (respuesta.status === 200 || respuesta.datos)) {
-            // Guardar en localStorage
-            localStorage.setItem("userRole", respuesta.rol || rolUsuario);
-            localStorage.setItem("userData", JSON.stringify(respuesta.datos || respuesta));
-            
-            const nombre = respuesta.datos?.primerNombre || 
-                          respuesta.primerNombre || 
-                          "Usuario";
-            
-            alert(`¡Bienvenid@, ${nombre}!`);
+        try {
+            let respuesta;
 
-            
             if (rolUsuario === "supervisor") {
-                navigate("/dashboardSupervisor");
+                respuesta = await service.autenticarSupervisor(loginData.user, loginData.password);
             } else if (rolUsuario === "pareja") {
-                navigate("/dashboardPareja");
+                respuesta = await service.autenticarPareja(loginData.user, loginData.password);
             } else {
-                navigate("/dashboard");
+                // Cliente (default)
+                respuesta = await service.autenticarCliente(loginData.user, loginData.password);
             }
-        } else {
-            alert("Error al iniciar sesión. Verifica tus credenciales.");
+
+            if (respuesta && (respuesta.status === 200 || respuesta.datos)) {
+                // Guardar en localStorage
+                localStorage.setItem("userRole", respuesta.rol || rolUsuario);
+                localStorage.setItem("userData", JSON.stringify(respuesta.datos || respuesta));
+
+                const nombre = respuesta.datos?.primerNombre ||
+                    respuesta.primerNombre ||
+                    "Usuario";
+
+                alert(`¡Bienvenid@, ${nombre}!`);
+
+                if (rolUsuario === "supervisor") {
+                    navigate("/dashboardSupervisor");
+                } else if (rolUsuario === "pareja") {
+                    navigate("/dashboardPareja");
+                } else {
+                    navigate("/dashboard");
+                }
+            } else {
+                alert("Error al iniciar sesión. Verifica tus credenciales.");
+            }
+        } catch (error) {
+            console.error("Error en autenticación:", error);
+            const mensajeError = error.response?.data?.message ||
+                error.message ||
+                "Credenciales incorrectas o error de conexión";
+            alert(`Error al iniciar sesión: ${mensajeError}`);
         }
-    } catch (error) {
-        console.error("Error en autenticación:", error);
-        const mensajeError = error.response?.data?.message || 
-                            error.message || 
-                            "Credenciales incorrectas o error de conexión";
-        alert(`Error al iniciar sesión: ${mensajeError}`);
-    }
-};
+    };
+
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
+
+        const camposAValidar = [
+            "primerNombre",
+            "primerApellido",
+            "nombreUsuario",
+            "correoElectronico",
+            "contraseniaUsuario",
+            rolUsuario === "supervisor" ? "idAlmacen" : "cupoTotal",
+        ];
+
+        const nuevosErrores = {};
+        const nuevosTocados = {};
+        camposAValidar.forEach((campo) => {
+            nuevosErrores[campo] = validarCampoSignup(campo, datosRegistro[campo]);
+            nuevosTocados[campo] = true;
+        });
+
+        setErroresRegistro(nuevosErrores);
+        setTocadosRegistro((prev) => ({ ...prev, ...nuevosTocados }));
+
+        if (hayErrores(nuevosErrores)) {
+            return;
+        }
+
         try {
             let respuesta;
             if (rolUsuario === "supervisor") {
@@ -147,6 +238,8 @@ function Login() {
                     cupoTotal: 0,
                     idAlmacen: "",
                 });
+                setErroresRegistro({});
+                setTocadosRegistro({});
                 setActiveTab("login");
             }
         } catch (error) {
@@ -216,21 +309,41 @@ function Login() {
                             <h1 className="form-title">Bienvenido de nuevo</h1>
                             <p className="form-desc">Ingresa tus credenciales para acceder</p>
 
-                            <form onSubmit={handleLoginSubmit}>
+                            <form onSubmit={handleLoginSubmit} noValidate>
                                 <div className="field">
-                                    <label htmlFor="user">Usuario</label>
-                                    <div className="input-wrap">
-                                        <input type="text" id="user" placeholder="Usuario" value={loginData.user} onChange={handleLoginChange} required />
+                                    <label htmlFor="user" className="etiqueta-requerida">Usuario</label>
+                                    <div className={`input-wrap ${claseCampo(erroresLogin.user, tocadosLogin.user)}`}>
+                                        <input
+                                            type="text"
+                                            id="user"
+                                            placeholder="Usuario"
+                                            value={loginData.user}
+                                            onChange={handleLoginChange}
+                                            onBlur={handleLoginBlur}
+                                        />
                                     </div>
+                                    {tocadosLogin.user && erroresLogin.user && (
+                                        <span className="mensaje-error-campo">{erroresLogin.user}</span>
+                                    )}
                                 </div>
                                 <div className="field">
-                                    <label htmlFor="password">Contraseña</label>
-                                    <div className="input-wrap">
-                                        <input type={showLoginPass ? "text" : "password"} id="password" placeholder="••••••••" value={loginData.password} onChange={handleLoginChange} required />
+                                    <label htmlFor="password" className="etiqueta-requerida">Contraseña</label>
+                                    <div className={`input-wrap ${claseCampo(erroresLogin.password, tocadosLogin.password)}`}>
+                                        <input
+                                            type={showLoginPass ? "text" : "password"}
+                                            id="password"
+                                            placeholder="••••••••"
+                                            value={loginData.password}
+                                            onChange={handleLoginChange}
+                                            onBlur={handleLoginBlur}
+                                        />
                                         <button type="button" className="toggle-pass" onClick={() => setShowLoginPass((v) => !v)}>
                                             {showLoginPass ? "Ocultar" : "Ver"}
                                         </button>
                                     </div>
+                                    {tocadosLogin.password && erroresLogin.password && (
+                                        <span className="mensaje-error-campo">{erroresLogin.password}</span>
+                                    )}
                                 </div>
 
                                 <button type="submit" className="btn-primary">Iniciar sesión</button>
@@ -250,13 +363,23 @@ function Login() {
                             <h1 className="form-title">Crea tu cuenta</h1>
                             <p className="form-desc">¡Únete a nosotros!</p>
 
-                            <form onSubmit={handleSignupSubmit}>
+                            <form onSubmit={handleSignupSubmit} noValidate>
                                 <div className="field name-grid">
                                     <div>
-                                        <label htmlFor="primerNombre">Primer Nombre</label>
-                                        <div className="input-wrap">
-                                            <input type="text" id="primerNombre" placeholder="Diana" value={datosRegistro.primerNombre} onChange={handleSignupChange} required />
+                                        <label htmlFor="primerNombre" className="etiqueta-requerida">Primer Nombre</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.primerNombre, tocadosRegistro.primerNombre)}`}>
+                                            <input
+                                                type="text"
+                                                id="primerNombre"
+                                                placeholder="Diana"
+                                                value={datosRegistro.primerNombre}
+                                                onChange={handleSignupChange}
+                                                onBlur={handleSignupBlur}
+                                            />
                                         </div>
+                                        {tocadosRegistro.primerNombre && erroresRegistro.primerNombre && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.primerNombre}</span>
+                                        )}
                                     </div>
                                     <div>
                                         <label htmlFor="segundoNombre">Segundo Nombre</label>
@@ -268,10 +391,20 @@ function Login() {
 
                                 <div className="field name-grid">
                                     <div>
-                                        <label htmlFor="primerApellido">Primer Apellido</label>
-                                        <div className="input-wrap">
-                                            <input type="text" id="primerApellido" placeholder="Pérez" value={datosRegistro.primerApellido} onChange={handleSignupChange} required />
+                                        <label htmlFor="primerApellido" className="etiqueta-requerida">Primer Apellido</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.primerApellido, tocadosRegistro.primerApellido)}`}>
+                                            <input
+                                                type="text"
+                                                id="primerApellido"
+                                                placeholder="Pérez"
+                                                value={datosRegistro.primerApellido}
+                                                onChange={handleSignupChange}
+                                                onBlur={handleSignupBlur}
+                                            />
                                         </div>
+                                        {tocadosRegistro.primerApellido && erroresRegistro.primerApellido && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.primerApellido}</span>
+                                        )}
                                     </div>
                                     <div>
                                         <label htmlFor="segundoApellido">Segundo Apellido</label>
@@ -283,29 +416,49 @@ function Login() {
 
                                 <div className="field name-grid">
                                     <div>
-                                        <label htmlFor="nombreUsuario">Usuario</label>
-                                        <div className="input-wrap">
-                                            <input type="text" id="nombreUsuario" placeholder="diana123" value={datosRegistro.nombreUsuario} onChange={handleSignupChange} required />
+                                        <label htmlFor="nombreUsuario" className="etiqueta-requerida">Usuario</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.nombreUsuario, tocadosRegistro.nombreUsuario)}`}>
+                                            <input
+                                                type="text"
+                                                id="nombreUsuario"
+                                                placeholder="diana123"
+                                                value={datosRegistro.nombreUsuario}
+                                                onChange={handleSignupChange}
+                                                onBlur={handleSignupBlur}
+                                            />
                                         </div>
+                                        {tocadosRegistro.nombreUsuario && erroresRegistro.nombreUsuario && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.nombreUsuario}</span>
+                                        )}
                                     </div>
                                     <div>
-                                        <label htmlFor="correoElectronico">Correo Electrónico</label>
-                                        <div className="input-wrap">
-                                            <input type="email" id="correoElectronico" placeholder="ejemplo@correo.com" value={datosRegistro.correoElectronico} onChange={handleSignupChange} required />
+                                        <label htmlFor="correoElectronico" className="etiqueta-requerida">Correo Electrónico</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.correoElectronico, tocadosRegistro.correoElectronico)}`}>
+                                            <input
+                                                type="email"
+                                                id="correoElectronico"
+                                                placeholder="ejemplo@correo.com"
+                                                value={datosRegistro.correoElectronico}
+                                                onChange={handleSignupChange}
+                                                onBlur={handleSignupBlur}
+                                            />
                                         </div>
+                                        {tocadosRegistro.correoElectronico && erroresRegistro.correoElectronico && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.correoElectronico}</span>
+                                        )}
                                     </div>
                                 </div>
 
                                 {rolUsuario === "supervisor" ? (
                                     <div className="field">
-                                        <label htmlFor="idAlmacen">Almacén Asignado</label>
-                                        <div className="input-wrap">
+                                        <label htmlFor="idAlmacen" className="etiqueta-requerida">Almacén Asignado</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.idAlmacen, tocadosRegistro.idAlmacen)}`}>
                                             <select
                                                 id="idAlmacen"
                                                 className="desplegable-personalizado"
                                                 value={datosRegistro.idAlmacen}
                                                 onChange={handleSignupChange}
-                                                required
+                                                onBlur={handleSignupBlur}
                                             >
                                                 <option value="">-- Selecciona el almacén a supervisar --</option>
                                                 {almacenes.map((alm) => (
@@ -315,24 +468,47 @@ function Login() {
                                                 ))}
                                             </select>
                                         </div>
+                                        {tocadosRegistro.idAlmacen && erroresRegistro.idAlmacen && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.idAlmacen}</span>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="field">
-                                        <label htmlFor="cupoTotal">Cupo de Crédito Solicitado</label>
-                                        <div className="input-wrap">
-                                            <input type="number" id="cupoTotal" placeholder="Ej: 500000" value={datosRegistro.cupoTotal} onChange={handleSignupChange} required />
+                                        <label htmlFor="cupoTotal" className="etiqueta-requerida">Cupo de Crédito Solicitado</label>
+                                        <div className={`input-wrap ${claseCampo(erroresRegistro.cupoTotal, tocadosRegistro.cupoTotal)}`}>
+                                            <input
+                                                type="number"
+                                                id="cupoTotal"
+                                                placeholder="Ej: 500000"
+                                                value={datosRegistro.cupoTotal}
+                                                onChange={handleSignupChange}
+                                                onBlur={handleSignupBlur}
+                                            />
                                         </div>
+                                        {tocadosRegistro.cupoTotal && erroresRegistro.cupoTotal && (
+                                            <span className="mensaje-error-campo">{erroresRegistro.cupoTotal}</span>
+                                        )}
                                     </div>
                                 )}
 
                                 <div className="field">
-                                    <label htmlFor="contraseniaUsuario">Contraseña</label>
-                                    <div className="input-wrap">
-                                        <input type={showSignupPass ? "text" : "password"} id="contraseniaUsuario" placeholder="Mínimo 8 caracteres" value={datosRegistro.contraseniaUsuario} onChange={handleSignupChange} required />
+                                    <label htmlFor="contraseniaUsuario" className="etiqueta-requerida">Contraseña</label>
+                                    <div className={`input-wrap ${claseCampo(erroresRegistro.contraseniaUsuario, tocadosRegistro.contraseniaUsuario)}`}>
+                                        <input
+                                            type={showSignupPass ? "text" : "password"}
+                                            id="contraseniaUsuario"
+                                            placeholder="Mínimo 8 caracteres"
+                                            value={datosRegistro.contraseniaUsuario}
+                                            onChange={handleSignupChange}
+                                            onBlur={handleSignupBlur}
+                                        />
                                         <button type="button" className="toggle-pass" onClick={() => setShowSignupPass((v) => !v)}>
                                             {showSignupPass ? "Ocultar" : "Ver"}
                                         </button>
                                     </div>
+                                    {tocadosRegistro.contraseniaUsuario && erroresRegistro.contraseniaUsuario && (
+                                        <span className="mensaje-error-campo">{erroresRegistro.contraseniaUsuario}</span>
+                                    )}
                                     <div className="strength-meter">
                                         {[0, 1, 2].map((i) => (
                                             <span key={i} style={{ background: i < passwordStrength ? strengthColors[passwordStrength - 1] : "#e7e2d3" }} />

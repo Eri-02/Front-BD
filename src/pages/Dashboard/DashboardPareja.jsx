@@ -3,11 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import service from "../../service/service";
 import "./DashboardPareja.css";
 
-const almacenesQuemados = [
-    { id_almacen: 1, nombre: "Almacén Centro" },
-    { id_almacen: 2, nombre: "Almacén Norte" },
-];
-
 function DashboardPareja() {
     const navigate = useNavigate();
 
@@ -16,7 +11,6 @@ function DashboardPareja() {
     const [loading, setLoading] = useState(true);
     const [compras, setCompras] = useState([]);
     const [restricciones, setRestricciones] = useState([]);
-    const [filterAlmacen, setFilterAlmacen] = useState("");
     const [montoSobrecupo, setMontoSobrecupo] = useState("");
     const [almacenes, setAlmacenes] = useState([]);
     const [almacenSobrecupo, setAlmacenSobrecupo] = useState("");
@@ -111,8 +105,6 @@ function DashboardPareja() {
     const circunferencia = 2 * Math.PI * radio;
     const offsetAnillo = 0;
 
-    const comprasFiltradas = compras.filter((c) => !filterAlmacen || (c.idAlmacen || c.id_almacen) === Number(filterAlmacen));
-
     if (loading) return <div style={{ color: "#fff", padding: "20px" }}>Cargando datos...</div>;
 
     return (
@@ -159,89 +151,8 @@ function DashboardPareja() {
                 </div>
 
 
-                {/*CAMBAIR ESTOOOOO PROVISIONAL PARA GENERAR LOS SOBRECUPOS*/}
                 <div className="main-grid">
                     <div>
-                        <div
-                            style={{
-                                position: "absolute",
-                                top: "380px",
-                                right: "200px",
-                                width: "260px",
-                                background: "white",
-                                borderRadius: "14px",
-                                padding: "18px",
-                                border: "1px solid rgba(255,255,255,0.08)"
-                            }}
-                        >
-                            <h4
-                                style={{
-                                    margin: 0,
-                                    marginBottom: "12px",
-                                    color: "black",
-                                    fontSize: "15px"
-                                }}
-                            >
-                                Generar solicitud de sobrecupo
-                            </h4>
-
-                            <input
-                                type="number"
-                                placeholder="Monto solicitado"
-                                value={montoSobrecupo}
-                                onChange={(e) => setMontoSobrecupo(e.target.value)}
-                                style={{
-                                    width: "100%",
-                                    padding: "10px",
-                                    borderRadius: "8px",
-                                    border: "1px solid #555",
-                                    background: "white",
-                                    color: "black",
-                                    marginBottom: "12px",
-                                    boxSizing: "border-box"
-                                }}
-                            />
-                            <select
-                                value={almacenSobrecupo}
-                                onChange={(e) => setAlmacenSobrecupo(e.target.value)}
-                                style={{
-                                    width: "100%",
-                                    padding: "10px",
-                                    borderRadius: "8px",
-                                    border: "1px solid #555",
-                                    background: "white",
-                                    color: "black",
-                                    marginBottom: "12px",
-                                    boxSizing: "border-box"
-                                }}
-                            >
-                                <option value="">Seleccione un almacén</option>
-
-                                {almacenes.map((almacen) => (
-                                    <option
-                                        key={almacen.idAlmacen || almacen.id_almacen}
-                                        value={almacen.idAlmacen || almacen.id_almacen}
-                                    >
-                                        {almacen.nombre || almacen.nombreAlmacen}
-                                    </option>
-                                ))}
-                            </select>
-                            <button
-                                style={{
-                                    width: "100%",
-                                    padding: "10px",
-                                    border: "none",
-                                    borderRadius: "8px",
-                                    background: "white",
-                                    color: "black",
-                                    fontWeight: "bold",
-                                    cursor: "pointer"
-                                }}
-                                onClick={generarSobrecupo}
-                            >
-                                Generar
-                            </button>
-                        </div>
                         <div className="col-title">Mis Restricciones <span className="minus">—</span></div>
                         {restricciones.length === 0 ? <p style={{ color: "#aaa", padding: "10px" }}>Sin restricciones activas.</p> :
                             restricciones.map((r) => (
@@ -253,32 +164,60 @@ function DashboardPareja() {
                         }
                     </div>
 
-
-
-
-
-
-
-
-
-
-
-
                     <div>
                         <div className="invested-card">
                             <div className="col-title">Mis Compras <span className="minus">—</span></div>
-                            <select className="filter-select" onChange={(e) => setFilterAlmacen(e.target.value)}>
-                                <option value="">Filtrar por Almacén</option>
-                                {almacenesQuemados.map((a) => <option key={a.id_almacen} value={a.id_almacen}>{a.nombre}</option>)}
-                            </select>
                             <table className="tx-table">
                                 <thead><tr><th>Fecha</th><th>Hora</th><th>Monto</th></tr></thead>
                                 <tbody>
-                                {comprasFiltradas.map((c, i) => (
+                                {compras.map((c, i) => (
                                     <tr key={i}><td>{c.fecha}</td><td>{c.hora}</td><td>{formatearMoneda(c.monto)}</td></tr>
                                 ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="col-title">Sobrecupo <span className="minus">—</span></div>
+                        <div className="mini-card">
+                            <div className="mini-title">Generar solicitud de sobrecupo</div>
+                            <form
+                                className="request-form"
+                                onSubmit={(e) => { e.preventDefault(); generarSobrecupo(); }}
+                            >
+                                <div className="field">
+                                    <label htmlFor="monto">Monto solicitado</label>
+                                    <input
+                                        type="number"
+                                        id="monto"
+                                        placeholder="$0.00"
+                                        value={montoSobrecupo}
+                                        onChange={(e) => setMontoSobrecupo(e.target.value)}
+                                    />
+                                </div>
+                                <div className="field">
+                                    <label htmlFor="almacen">Almacén</label>
+                                    <select
+                                        id="almacen"
+                                        value={almacenSobrecupo}
+                                        onChange={(e) => setAlmacenSobrecupo(e.target.value)}
+                                    >
+                                        <option value="">Seleccione un almacén</option>
+                                        {almacenes.map((almacen) => (
+                                            <option
+                                                key={almacen.idAlmacen || almacen.id_almacen}
+                                                value={almacen.idAlmacen || almacen.id_almacen}
+                                            >
+                                                {almacen.nombre || almacen.nombreAlmacen}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <button type="submit" className="btn-solicitar">
+                                    Generar
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

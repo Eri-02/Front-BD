@@ -218,7 +218,7 @@ function ProductosCompra() {
                         onClick={() => navigate("/dashboardPareja")}
                         disabled={comprando}
                     >
-                        ← Volver al Dashboard
+                         Volver al Dashboard
                     </button>
                 </div>
 

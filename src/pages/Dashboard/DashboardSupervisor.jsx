@@ -71,8 +71,6 @@ function DashboardSupervisor() {
                 <div className="navbar">
                     <nav className="links">
                         <Link to="/dashboard-supervisor" className="active">Panel</Link>
-                        <Link to="/productos">Productos</Link>
-                        <Link to="/supervisor/cliente">Usuarios</Link>
                     </nav>
                 </div>
 
@@ -102,11 +100,6 @@ function DashboardSupervisor() {
                 </div>
 
                 <div className="main-grid">
-                    <div>
-                        <div className="col-title">Clientes <span className="minus">—</span></div>
-                        <p style={{ color: "#aaa", padding: "10px" }}>Sección en desarrollo</p>
-                    </div>
-
                     <div>
                         <div className="invested-card">
                             <div className="col-title" style={{ marginBottom: 8 }}>
@@ -139,11 +132,6 @@ function DashboardSupervisor() {
                                 ))
                             )}
                         </div>
-                    </div>
-
-                    <div>
-                        <div className="col-title">Compras del Almacén <span className="minus">—</span></div>
-                        <p style={{ color: "#aaa", padding: "10px" }}>Sin compras recientes.</p>
                     </div>
                 </div>
             </div>

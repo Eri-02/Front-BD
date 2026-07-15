@@ -3,22 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import service from "../../service/service";
 import "./DashboardCliente.css";
 
-const transactions = [
-    { id: 1, date: "2026-07-10", time: "14:30", amount: "$1.5k", type: "gasto", partner: "Luis" }
-];
-
-const overlimits = [
-    { id: 1, name: "Luis", avatars: ["/imagen.png"], amount: "+$5.0k", status: "pendiente" },
-    { id: 2, name: "Diego", avatars: ["/imagen.png"], amount: "+$3.0k", status: "aprobado" },
-    { id: 3, name: "Mateo", avatars: ["/imagen.png"], amount: "+$2.0k", status: "rechazado" },
-];
-
-const statusLabel = {
-    esperando_cliente: "Pendiente de Autorización",
-    aprobado: "Aprobado",
-    rechazado: "Rechazado",
-};
-
 function Dashboard() {
     const navigate = useNavigate();
 
@@ -43,18 +27,24 @@ function Dashboard() {
     const [overlimits, setOverlimits] = useState([]);
     const [loadingPartners, setLoadingPartners] = useState(true);
 
-    const [filterPartner, setFilterPartner] = useState("");
-    const [requestForm, setRequestForm] = useState({
-        pareja: "",
-        monto: "",
-        motivo: "",
-    });
     const statusLabel = {
         pendiente: "Pendiente",
         aprobado: "Aprobado",
         rechazado: "Rechazado",
         esperando_cliente: "Requiere Autorización"
     };
+
+    // Declarada arriba de todo para poder usarla dentro del useEffect
+    // y en cualquier otro handler sin problemas de orden.
+    const formatearMoneda = (valor) => {
+        const numero = Number(valor) || 0;
+        return new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+            minimumFractionDigits: 0
+        }).format(numero);
+    };
+
     useEffect(() => {
         const role = localStorage.getItem("userRole");
 
@@ -81,12 +71,21 @@ function Dashboard() {
 
                 const dataParejas = await service.obtenerParejasPorCliente(idCliente);
                 if (Array.isArray(dataParejas)) {
-                    setPartners(dataParejas.map(p => ({
-                        id: p.idPareja,
-                        name: `${p.primerNombre} ${p.primerApellido}`,
-                        avatars: ["/img/imagen.png"],
-                        assignedRaw: Number(p.cupoAsignado) || 0
-                    })));
+                    setPartners(dataParejas.map(p => {
+                        const asignado = Number(p.cupoAsignado) || 0;
+                        const consumidoPareja = Number(p.cupoConsumido) || 0;
+                        const progreso = asignado > 0 ? Math.round((consumidoPareja / asignado) * 100) : 0;
+
+                        return {
+                            id: p.idPareja,
+                            name: `${p.primerNombre} ${p.primerApellido}`,
+                            avatars: ["/img/imagen.png"],
+                            assignedRaw: asignado,
+                            assigned: formatearMoneda(asignado),
+                            used: formatearMoneda(consumidoPareja),
+                            progress: progreso
+                        };
+                    }));
                 }
 
                 try {
@@ -119,10 +118,6 @@ function Dashboard() {
 
     }, [cliente, navigate]);
 
-    const handleRequestChange = (e) => {
-        const { id, value } = e.target;
-        setRequestForm((prev) => ({ ...prev, [id]: value }));
-    };
     const handleResponderSobrecupo = async (idSobrecupo, aprobado) => {
         try {
             await service.responderSobrecupo(idSobrecupo, aprobado);
@@ -145,23 +140,9 @@ function Dashboard() {
         }
     };
 
-    const handleRequestSubmit = (e) => {
-        e.preventDefault();
-        alert(`Solicitud enviada para ${requestForm.pareja} `);
-    };
-
     if (!cliente) {
         return <div style={{ color: "#fff", padding: "20px" }}>Verificando credenciales...</div>;
     }
-
-    const formatearMoneda = (valor) => {
-        const numero = Number(valor) || 0;
-        return new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "COP",
-            minimumFractionDigits: 0
-        }).format(numero);
-    };
 
     const porcentajeUsado = cupoTotalReal > 0 ? Math.round((cupoConsumidoGeneral / cupoTotalReal) * 100) : 0;
 
@@ -280,98 +261,6 @@ function Dashboard() {
                     </div>
 
                     <div>
-                        <div className="invested-card">
-                            <div className="col-title" style={{ marginBottom: 8 }}>
-                                Compras y Gastos <span className="minus">—</span>
-                            </div>
-
-                            <div className="spend-summary">
-                                <div className="spend-item compra">
-                                    <p className="lbl">Compras del mes</p>
-                                    <p className="val">$3.5k</p>
-                                </div>
-                                <div className="spend-item gasto">
-                                    <p className="lbl">Gastos del mes</p>
-                                    <p className="val">$1.5k</p>
-                                </div>
-                            </div>
-
-                            <div className="col-title" style={{ fontSize: 13, marginBottom: 10 }}>
-                                Consumo por Pareja
-                            </div>
-                            <div className="chart-wrap">
-                                {loadingPartners ? (
-                                    <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
-                                        Cargando consumo...
-                                    </p>
-                                ) : partners.length === 0 ? (
-                                    <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
-                                        No hay datos de consumo por pareja
-                                    </p>
-                                ) : (
-                                    <div className="bar-chart">
-                                        {partners.map((p) => {
-                                            const pct = p.assignedRaw > 0
-                                                ? Math.min((p.usedRaw / p.assignedRaw) * 100, 100)
-                                                : 0;
-                                            return (
-                                                <div className="bar-col" key={p.id}>
-                                                    <div className="bar-track">
-                                                        <div
-                                                            className="bar-fill"
-                                                            style={{ height: `${pct}%` }}
-                                                        />
-                                                    </div>
-                                                    <p className="bar-pct">{Math.round(pct)}%</p>
-                                                    <p className="bar-name">{p.name}</p>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            <select
-                                className="filter-select"
-                                value={filterPartner}
-                                onChange={(e) => setFilterPartner(e.target.value)}
-                            >
-                                <option value="">Filtrar por Pareja</option>
-                                {partners.map((p) => (
-                                    <option key={p.id} value={p.name}>
-                                        {p.name}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <table className="tx-table">
-                                <thead>
-                                <tr>
-                                    <th>Fecha/Hora</th>
-                                    <th>Monto</th>
-                                    <th>Pareja</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {transactions
-                                    .filter((tx) => !filterPartner || tx.partner === filterPartner)
-                                    .map((tx) => (
-                                        <tr key={tx.id}>
-                                            <td>
-                                                {tx.date}
-                                                <br />
-                                                {tx.time}
-                                            </td>
-                                            <td className={tx.type}>{tx.amount}</td>
-                                            <td>{tx.partner}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div>
                         <div className="col-title">
                             Sobrecupo <span className="minus">—</span>
                         </div>
@@ -422,58 +311,7 @@ function Dashboard() {
                                 ))
                             )}
                         </div>
-
-                        <div className="mini-card">
-                            <div className="mini-title">Solicitar Sobrecupo</div>
-                            <form className="request-form" onSubmit={handleRequestSubmit}>
-                                <div className="field">
-                                    <label htmlFor="pareja">Pareja</label>
-                                    <select
-                                        id="pareja"
-                                        value={requestForm.pareja}
-                                        onChange={handleRequestChange}
-                                        disabled={loadingPartners || partners.length === 0}
-                                    >
-                                        {partners.map((p) => (
-                                            <option key={p.id} value={p.name}>
-                                                {p.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="field">
-                                    <label htmlFor="monto">Monto solicitado</label>
-                                    <input
-                                        type="text"
-                                        id="monto"
-                                        placeholder="$0.00"
-                                        value={requestForm.monto}
-                                        onChange={handleRequestChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="field">
-                                    <label htmlFor="motivo">Motivo</label>
-                                    <input
-                                        type="text"
-                                        id="motivo"
-                                        placeholder="Ej. Compra especial del mes"
-                                        value={requestForm.motivo}
-                                        onChange={handleRequestChange}
-                                    />
-                                </div>
-                                <button type="submit" className="btn-solicitar" disabled={partners.length === 0}>
-                                    Enviar Solicitud de aprobación sobrecupo
-                                </button>
-                            </form>
-                            <p className="form-hint">
-                                La solicitud será revisada por el supervisor
-                            </p>
-                        </div>
                     </div>
-
-
-
 
                 </div>
             </div>

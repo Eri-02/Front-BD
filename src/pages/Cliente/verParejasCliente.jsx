@@ -49,7 +49,7 @@ function VerParejasCliente() {
                 <div className="cliente-body">
                     <div className="search-box">
                         <button className="btn btn-secondary" onClick={() => navigate("/supervisor/cliente")}>
-                            ← Volver a clientes
+                             Volver a clientes
                         </button>
                     </div>
 

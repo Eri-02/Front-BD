@@ -125,10 +125,16 @@ nav.links a.active::after{
 
 /* MAIN GRID */
 .main-grid{
-  display:grid;
-  grid-template-columns:1fr 1.15fr 0.85fr;
-  gap:18px;
-  align-items:start;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:flex-start;
+  gap:24px;
+  margin:0 auto;
+}
+.main-grid > div{
+  width:100%;
+  max-width:380px;
 }
 .col-title{
   display:flex; align-items:center; justify-content:space-between;
@@ -141,7 +147,7 @@ nav.links a.active::after{
   color:var(--muted); font-weight:400; font-size:18px; cursor:pointer;
 }
 
-/* PAREJAS (izquierda) */
+/* PAREJAS */
 .partner-card{
   background:var(--white);
   border-radius:20px;
@@ -176,120 +182,7 @@ nav.links a.active::after{
 }
 .btn-config:hover{filter:brightness(1.05);}
 
-/* CENTRO — Compras y Gastos */
-.invested-card{
-  background:var(--white);
-  border-radius:20px;
-  padding:20px 22px 16px;
-  box-shadow:0 2px 10px rgba(58,69,102,0.05);
-  margin-bottom:16px;
-}
-.spend-summary{
-  display:flex;
-  gap:18px;
-  margin-bottom:16px;
-}
-.spend-item .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:0 0 3px;}
-.spend-item .val{font-family:'Fraunces', serif; font-size:18px; font-weight:600; margin:0;}
-.spend-item.gasto .val{color:var(--danger);}
-.spend-item.compra .val{color:var(--success);}
-
-/* Grafica real de consumo por pareja (reemplaza la grafica quemada) */
-.chart-wrap{
-  position:relative;
-  min-height:170px;
-  margin-bottom:6px;
-  display:flex;
-  align-items:stretch;
-}
-.bar-chart{
-  display:flex;
-  align-items:flex-end;
-  gap:18px;
-  width:100%;
-  height:170px;
-  padding:0 4px;
-  overflow-x:auto;
-}
-.bar-col{
-  flex:1 0 56px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  height:100%;
-  justify-content:flex-end;
-}
-.bar-track{
-  width:100%;
-  max-width:38px;
-  height:120px;
-  background:var(--track);
-  border-radius:8px;
-  display:flex;
-  align-items:flex-end;
-  overflow:hidden;
-}
-.bar-fill{
-  width:100%;
-  height:0%;
-  background:linear-gradient(180deg, var(--secondary) 0%, #e8b84b 100%);
-  border-radius:8px 8px 0 0;
-  transition:height .3s ease;
-}
-.bar-pct{
-  font-size:11.5px;
-  font-weight:800;
-  color:var(--text);
-  margin:8px 0 2px;
-}
-.bar-name{
-  font-size:10.5px;
-  color:var(--muted);
-  margin:0;
-  text-align:center;
-  max-width:70px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.filter-select{
-  width:100%;
-  margin-top:8px;
-  padding:11px 14px;
-  border-radius:10px;
-  border:1px solid #eee6d3;
-  background:#fbf9f2;
-  font-size:13px;
-  color:var(--text);
-  font-family:'Manrope',sans-serif;
-  font-weight:600;
-}
-.tx-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:14px;
-  font-size:13px;
-}
-.tx-table th{
-  text-align:left;
-  font-size:11px;
-  color:var(--muted);
-  font-weight:700;
-  padding-bottom:8px;
-  border-bottom:1px solid #f0ece0;
-}
-.tx-table td{
-  padding:10px 0;
-  border-bottom:1px solid #f5f2e9;
-  color:var(--text);
-  font-weight:600;
-}
-.tx-table td.neg{color:var(--danger);}
-.tx-table td.pos{color:var(--success);}
-.tx-table tr:last-child td{border-bottom:none;}
-
-/* DERECHA — Sobrecupo */
+/* SOBRECUPO */
 .mini-card{
   background:var(--white);
   border-radius:18px;
@@ -323,43 +216,6 @@ nav.links a.active::after{
 .badge.aprobado{background:#e7f3e9; color:var(--success);}
 .badge.pendiente{background:#fbf3d9; color:#b6862e;}
 .badge.rechazado{background:#f7e7e5; color:var(--danger);}
-
-.request-form .field{margin-bottom:14px;}
-.request-form label{
-  display:block;
-  font-size:12px;
-  font-weight:700;
-  color:var(--text);
-  margin-bottom:6px;
-}
-.request-form select,
-.request-form input{
-  width:100%;
-  padding:11px 13px;
-  border-radius:10px;
-  border:1.5px solid #ece7d9;
-  background:#fbf9f2;
-  font-family:'Manrope', sans-serif;
-  font-size:13px;
-  color:var(--text);
-  outline:none;
-}
-.request-form select:focus,
-.request-form input:focus{border-color:var(--secondary); background:#fff;}
-.btn-solicitar{
-  width:100%;
-  background:var(--secondary);
-  border:none;
-  color:var(--primary-dark);
-  font-weight:800;
-  font-size:13.5px;
-  padding:12px 0;
-  border-radius:10px;
-  cursor:pointer;
-  transition:filter .15s ease;
-}
-.btn-solicitar:hover{filter:brightness(1.05);}
-.form-hint{font-size:11.5px; color:var(--muted); margin:8px 0 0; line-height:1.5;}
 
 @media (max-width: 980px){
   .hero{grid-template-columns:1fr; text-align:center;}
